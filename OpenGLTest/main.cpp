@@ -7,6 +7,8 @@
 #include "Shader.h"
 #include "stb_image.h"
 
+float screenWidth = 800, screenHeight = 600;
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 }
@@ -23,7 +25,7 @@ int main(int argc, char** argv) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGLTest", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "OpenGLTest", NULL, NULL);
 	if (window == NULL) {
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
@@ -36,7 +38,7 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
-	glViewport(0, 0, 800, 600);
+	glViewport(0, 0, screenWidth, screenHeight);
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
@@ -143,10 +145,16 @@ int main(int argc, char** argv) {
 		float timeValue = glfwGetTime();
 		
 		ourShader.use();
-		glm::mat4 trans;
-		trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
-		trans = glm::rotate(trans, (float)timeValue, glm::vec3(0, 0, 1));
-		ourShader.setMatrix4fv("transform", glm::value_ptr(trans));
+		glm::mat4 model;
+		model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		glm::mat4 view;
+		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+		glm::mat4 projection;
+		projection = glm::perspective(glm::radians(45.0f), screenWidth / screenHeight, 1.0f, 100.0f);
+
+		ourShader.setMatrix4fv("model", glm::value_ptr(model));
+		ourShader.setMatrix4fv("view", glm::value_ptr(view));
+		ourShader.setMatrix4fv("projection", glm::value_ptr(projection));
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
@@ -156,13 +164,6 @@ int main(int argc, char** argv) {
 		glBindVertexArray(VAO);
 		//glDrawArrays(GL_TRIANGLES, 0, 3);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-		glm::mat4 trans2;
-		trans2 = glm::translate(trans2, glm::vec3(-0.5f, 0.5f, 0.0f));
-		trans2 = glm::scale(trans2, glm::vec3((sin(timeValue) + 1) / 2));
-		ourShader.setMatrix4fv("transform", glm::value_ptr(trans2));
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
 		glBindVertexArray(0);
 
 		glfwSwapBuffers(window);
