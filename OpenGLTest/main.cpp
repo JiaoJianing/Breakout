@@ -1,5 +1,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
+#include <gtc/type_ptr.hpp>
 #include <iostream>
 #include "Shader.h"
 #include "stb_image.h"
@@ -137,9 +140,13 @@ int main(int argc, char** argv) {
 
 		//绘制
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);//线框模式
-		//float timeValue = glfwGetTime();
+		float timeValue = glfwGetTime();
 		
 		ourShader.use();
+		glm::mat4 trans;
+		trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+		trans = glm::rotate(trans, (float)timeValue, glm::vec3(0, 0, 1));
+		ourShader.setMatrix4fv("transform", glm::value_ptr(trans));
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
@@ -149,6 +156,13 @@ int main(int argc, char** argv) {
 		glBindVertexArray(VAO);
 		//glDrawArrays(GL_TRIANGLES, 0, 3);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+		glm::mat4 trans2;
+		trans2 = glm::translate(trans2, glm::vec3(-0.5f, 0.5f, 0.0f));
+		trans2 = glm::scale(trans2, glm::vec3((sin(timeValue) + 1) / 2));
+		ourShader.setMatrix4fv("transform", glm::value_ptr(trans2));
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
 		glBindVertexArray(0);
 
 		glfwSwapBuffers(window);
