@@ -70,7 +70,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>../glfw/include;../glad/include;$(IncludePath)</IncludePath>
+    <IncludePath>../glfw/include;../glad/include;../glm;$(IncludePath)</IncludePath>
     <LibraryPath>../glfw/libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
