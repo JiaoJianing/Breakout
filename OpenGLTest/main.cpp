@@ -3,20 +3,49 @@
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
+#include <gtc/quaternion.hpp>
+#include <gtx/quaternion.hpp>
 #include <iostream>
 #include "Shader.h"
 #include "stb_image.h"
 
 float screenWidth = 800, screenHeight = 600;
+glm::vec3 cameraPos = glm::vec3(0, 0, 3);
+glm::vec3 cameraFront = glm::vec3(0, 0, -1);
+glm::vec3 cameraUp = glm::vec3(0, 1, 0);
+
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
+
+	glm::quat myQuat;
+	glm::toMat4(myQuat);
+
 }
 
 void processInput(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
+	float cameraSpeed = 5.0f * deltaTime;
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		cameraPos += cameraSpeed * cameraFront;
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		cameraPos -= cameraSpeed * cameraFront;
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	}
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+
 }
 
 int main(int argc, char** argv) {
@@ -33,6 +62,8 @@ int main(int argc, char** argv) {
 	}
 	glfwMakeContextCurrent(window);
 
+	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
@@ -41,6 +72,7 @@ int main(int argc, char** argv) {
 	glViewport(0, 0, screenWidth, screenHeight);
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
 
 	//准备数据
 	float vertices[] = {
@@ -193,11 +225,14 @@ int main(int argc, char** argv) {
 
 		//绘制
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);//线框模式
-		float timeValue = glfwGetTime();
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
 		
 		ourShader.use();
 		glm::mat4 view;
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
 		glm::mat4 projection;
 		projection = glm::perspective(glm::radians(45.0f), screenWidth / screenHeight, 1.0f, 100.0f);
 
@@ -216,7 +251,7 @@ int main(int argc, char** argv) {
 			glm::mat4 model;
 			model = glm::translate(model, cubePositions[i]);
 			float angle = 20.0f * (i + 1);
-			model = glm::rotate(model, timeValue * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+			model = glm::rotate(model, currentFrame * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 			ourShader.setMatrix4fv("model", glm::value_ptr(model));
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
