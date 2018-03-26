@@ -86,6 +86,37 @@ void processInput(GLFWwindow* window) {
 	}
 }
 
+unsigned int loadTexture(const char* path){
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+
+	int width, height, nrComponents;
+	unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
+	if (data) {
+		GLenum format;
+		if (nrComponents == 1) format = GL_RED;
+		else if (nrComponents == 3) format = GL_RGB;
+		else if (nrComponents == 4) format = GL_RGBA;
+
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		//设置纹理环绕、过滤方式
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		stbi_image_free(data);
+	}
+	else {
+		std::cout << "Failed to load diffuseTex" << std::endl;
+		stbi_image_free(data);
+	}
+
+	return textureID;
+}
 int main(int argc, char** argv) {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -196,8 +227,9 @@ int main(int argc, char** argv) {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	glBindVertexArray(0);
 
@@ -205,53 +237,14 @@ int main(int argc, char** argv) {
 	unsigned int lightVAO;
 	glGenVertexArrays(1, &lightVAO);
 	glBindVertexArray(lightVAO);
-	glBindBuffer(GL_TEXTURE_2D, VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 	glBindVertexArray(0);
 #pragma endregion
 
-	//加载图片到2D纹理
-	unsigned int texture1, texture2;
-	glGenTextures(1, &texture1);
-	glBindTexture(GL_TEXTURE_2D, texture1);
-	//设置纹理环绕、过滤方式
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	//垂直坐标翻转
-	stbi_set_flip_vertically_on_load(true);
-	int width, height, nrChannels;
-	unsigned char* data = stbi_load("resources/container.jpg", &width, &height, &nrChannels, 0);
-	if (data) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else {
-		std::cout << "Failed to load texture" << std::endl;
-	}
-
-	stbi_image_free(data);
-
-	//加载第二张图片
-	glGenTextures(1, &texture2);
-	glBindTexture(GL_TEXTURE_2D, texture2);
-	//设置纹理环绕、过滤方式
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	data = stbi_load("resources/awesomeface.png", &width, &height, &nrChannels, 0);
-	if (data) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else {
-		std::cout << "Failed to load texture" << std::endl;
-	}
-
-	stbi_image_free(data);
+	//加载漫反射纹理
+	unsigned int diffuseTex = loadTexture("resources/container2.png");
 
 	//使用着色器类
 	Shader objShader("shaders/shader.vs", "shaders/shader.fs");
@@ -266,7 +259,7 @@ int main(int argc, char** argv) {
 
 	while (!glfwWindowShouldClose(window))
 	{
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//绘制
@@ -288,28 +281,18 @@ int main(int argc, char** argv) {
 		objShader.setMatrix4fv("view", glm::value_ptr(view));
 		objShader.setMatrix4fv("projection", glm::value_ptr(projection));
 
-		objShader.setFloat3("objectColor", 1.0f, 0.5f, 0.31f);
 		objShader.setFloat3("viewPos", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
-		objShader.setFloat3("material.ambient", 1.0f, 0.5f, 0.31f);
-		objShader.setFloat3("material.diffuse", 1.0f, 0.5f, 0.31f);
+		objShader.setInt("material.diffuse", 0);
 		objShader.setFloat3("material.specular", 0.5f, 0.5f, 0.5f);
 		objShader.setFloat("material.shininess", 32.0f);
 
-		glm::vec3 lightColor;
-		lightColor.x = sin(currentFrame * 2.0f);
-		lightColor.y = sin(currentFrame * 0.7f);
-		lightColor.z = sin(currentFrame * 1.3f);
-		glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
-		glm::vec3 ambientColor = lightColor * glm::vec3(0.2f);
-		objShader.setFloat3("light.ambient", ambientColor.x,  ambientColor.y, ambientColor.z);
-		objShader.setFloat3("light.diffuse", diffuseColor.x, diffuseColor.y, diffuseColor.z);
+		objShader.setFloat3("light.ambient", 0.2f, 0.2f, 0.2f);
+		objShader.setFloat3("light.diffuse", 0.5f, 0.5f, 0.5f);
 		objShader.setFloat3("light.specular", 1.0f, 1.0f, 1.0f);
 		objShader.setFloat3("light.position", lightPos.x, lightPos.y, lightPos.z);
 
-		//glActiveTexture(GL_TEXTURE0);
-		//glBindTexture(GL_TEXTURE_2D, texture1);
-		//glActiveTexture(GL_TEXTURE0 + 1);
-		//glBindTexture(GL_TEXTURE_2D, texture2);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, diffuseTex);
 
 		glBindVertexArray(VAO);
 		for (unsigned int i = 0; i < 1; i++) {
@@ -333,7 +316,7 @@ int main(int argc, char** argv) {
 		lightShader.setMatrix4fv("view", glm::value_ptr(view));
 		lightShader.setMatrix4fv("projection", glm::value_ptr(projection));
 		lightShader.setMatrix4fv("model", glm::value_ptr(model));
-		lightShader.setFloat3("lightColor", lightColor.x, lightColor.y, lightColor.z);
+		lightShader.setFloat3("lightColor", 1.0f, 1.0f, 1.0f);
 
 		glBindVertexArray(lightVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -342,6 +325,10 @@ int main(int argc, char** argv) {
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteVertexArrays(1, &lightVAO);
+	glDeleteBuffers(1, &VBO);
 
 	glfwTerminate();
 	return 0;
