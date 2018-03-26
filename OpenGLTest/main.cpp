@@ -17,7 +17,7 @@ float lastFrame = 0.0f;
 
 Camera camera(screenWidth, screenHeight);
 
-glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+//glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
@@ -248,7 +248,6 @@ int main(int argc, char** argv) {
 	//加载漫反射纹理
 	unsigned int diffuseTex = loadTexture("resources/container2.png");
 	unsigned int specularTex = loadTexture("resources/container2_specular.png");
-	unsigned int emissionTex = loadTexture("resources/matrix.jpg");//放射光贴图
 
 	//使用着色器类
 	Shader objShader("shaders/shader.vs", "shaders/shader.fs");
@@ -264,7 +263,6 @@ int main(int argc, char** argv) {
 	objShader.use();
 	objShader.setInt("material.diffuse", 0);
 	objShader.setInt("material.specular", 1);
-	objShader.setInt("material.emission", 2);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -296,21 +294,19 @@ int main(int argc, char** argv) {
 		objShader.setFloat3("light.ambient", 0.2f, 0.2f, 0.2f);
 		objShader.setFloat3("light.diffuse", 0.5f, 0.5f, 0.5f);
 		objShader.setFloat3("light.specular", 1.0f, 1.0f, 1.0f);
-		objShader.setFloat3("light.position", lightPos.x, lightPos.y, lightPos.z);
+		objShader.setFloat3("light.direction", -0.2f, -1.0f, -0.3f);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuseTex);
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, specularTex); 
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, emissionTex);
+		glBindTexture(GL_TEXTURE_2D, specularTex);
 
 		glBindVertexArray(VAO);
-		for (unsigned int i = 0; i < 1; i++) {
+		for (unsigned int i = 0; i < 10; i++) {
 			glm::mat4 model;
 			model = glm::translate(model, cubePositions[i]);
 			float angle = 20.0f * (i + 1);
-			model = glm::rotate(model, currentFrame * glm::radians(0.f), glm::vec3(1.0f, 0.3f, 0.5f));
+			model = glm::rotate(model, /*currentFrame * */glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 			objShader.setMatrix4fv("model", glm::value_ptr(model));
 			glm::mat3 normalMat;
 			normalMat = glm::transpose(glm::inverse(model));
@@ -320,18 +316,18 @@ int main(int argc, char** argv) {
 		glBindVertexArray(0);
 
 		//绘制光源
-		lightShader.use();
-		glm::mat4 model;
-		model = glm::translate(model, lightPos);
-		model = glm::scale(model, glm::vec3(0.2f));
-		lightShader.setMatrix4fv("view", glm::value_ptr(view));
-		lightShader.setMatrix4fv("projection", glm::value_ptr(projection));
-		lightShader.setMatrix4fv("model", glm::value_ptr(model));
-		lightShader.setFloat3("lightColor", 1.0f, 1.0f, 1.0f);
+		//lightShader.use();
+		//glm::mat4 model;
+		//model = glm::translate(model, lightPos);
+		//model = glm::scale(model, glm::vec3(0.2f));
+		//lightShader.setMatrix4fv("view", glm::value_ptr(view));
+		//lightShader.setMatrix4fv("projection", glm::value_ptr(projection));
+		//lightShader.setMatrix4fv("model", glm::value_ptr(model));
+		//lightShader.setFloat3("lightColor", 1.0f, 1.0f, 1.0f);
 
-		glBindVertexArray(lightVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glBindVertexArray(0);
+		//glBindVertexArray(lightVAO);
+		//glDrawArrays(GL_TRIANGLES, 0, 36);
+		//glBindVertexArray(0);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
