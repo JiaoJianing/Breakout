@@ -17,7 +17,7 @@ float lastFrame = 0.0f;
 
 Camera camera(screenWidth, screenHeight);
 
-glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+//glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
@@ -294,10 +294,10 @@ int main(int argc, char** argv) {
 		objShader.setFloat3("light.ambient", 0.2f, 0.2f, 0.2f);
 		objShader.setFloat3("light.diffuse", 0.5f, 0.5f, 0.5f);
 		objShader.setFloat3("light.specular", 1.0f, 1.0f, 1.0f);
-		objShader.setFloat3("light.position", lightPos.x, lightPos.y, lightPos.z);
-		objShader.setFloat("light.constant", 1.0f);
-		objShader.setFloat("light.linear", 0.09f);
-		objShader.setFloat("light.quadratic", 0.032f);
+		objShader.setFloat3("light.position", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
+		objShader.setFloat3("light.direction", camera.GetTarget().x, camera.GetTarget().y, camera.GetTarget().z);
+		objShader.setFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
+		objShader.setFloat("light.outerCutOff", glm::cos(glm::radians(17.5f)));
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuseTex);
@@ -319,18 +319,18 @@ int main(int argc, char** argv) {
 		glBindVertexArray(0);
 
 		//ªÊ÷∆π‚‘¥
-		lightShader.use();
-		glm::mat4 model;
-		model = glm::translate(model, lightPos);
-		model = glm::scale(model, glm::vec3(0.2f));
-		lightShader.setMatrix4fv("view", glm::value_ptr(view));
-		lightShader.setMatrix4fv("projection", glm::value_ptr(projection));
-		lightShader.setMatrix4fv("model", glm::value_ptr(model));
-		lightShader.setFloat3("lightColor", 1.0f, 1.0f, 1.0f);
+		//lightShader.use();
+		//glm::mat4 model;
+		//model = glm::translate(model, lightPos);
+		//model = glm::scale(model, glm::vec3(0.2f));
+		//lightShader.setMatrix4fv("view", glm::value_ptr(view));
+		//lightShader.setMatrix4fv("projection", glm::value_ptr(projection));
+		//lightShader.setMatrix4fv("model", glm::value_ptr(model));
+		//lightShader.setFloat3("lightColor", 1.0f, 1.0f, 1.0f);
 
-		glBindVertexArray(lightVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glBindVertexArray(0);
+		//glBindVertexArray(lightVAO);
+		//glDrawArrays(GL_TRIANGLES, 0, 36);
+		//glBindVertexArray(0);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
