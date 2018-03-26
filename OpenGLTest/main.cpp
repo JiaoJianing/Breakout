@@ -243,9 +243,12 @@ int main(int argc, char** argv) {
 	glBindVertexArray(0);
 #pragma endregion
 
+	//垂直坐标翻转
+	stbi_set_flip_vertically_on_load(true);
 	//加载漫反射纹理
 	unsigned int diffuseTex = loadTexture("resources/container2.png");
 	unsigned int specularTex = loadTexture("resources/container2_specular.png");
+	unsigned int emissionTex = loadTexture("resources/matrix.jpg");//放射光贴图
 
 	//使用着色器类
 	Shader objShader("shaders/shader.vs", "shaders/shader.fs");
@@ -257,6 +260,11 @@ int main(int argc, char** argv) {
 	std::cout << "Maximum number of vertex attributes supported: " << nrAttributes << std::endl;
 
 	glEnable(GL_DEPTH_TEST);
+
+	objShader.use();
+	objShader.setInt("material.diffuse", 0);
+	objShader.setInt("material.specular", 1);
+	objShader.setInt("material.emission", 2);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -283,8 +291,6 @@ int main(int argc, char** argv) {
 		objShader.setMatrix4fv("projection", glm::value_ptr(projection));
 
 		objShader.setFloat3("viewPos", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
-		objShader.setInt("material.diffuse", 0);
-		objShader.setInt("material.specular", 1);
 		objShader.setFloat("material.shininess", 32.0f);
 
 		objShader.setFloat3("light.ambient", 0.2f, 0.2f, 0.2f);
@@ -295,7 +301,9 @@ int main(int argc, char** argv) {
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuseTex);
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, specularTex);
+		glBindTexture(GL_TEXTURE_2D, specularTex); 
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, emissionTex);
 
 		glBindVertexArray(VAO);
 		for (unsigned int i = 0; i < 1; i++) {
