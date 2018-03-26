@@ -8,44 +8,68 @@
 #include <iostream>
 #include "Shader.h"
 #include "stb_image.h"
+#include "Camera.h"
 
 float screenWidth = 800, screenHeight = 600;
-glm::vec3 cameraPos = glm::vec3(0, 0, 3);
-glm::vec3 cameraFront = glm::vec3(0, 0, -1);
-glm::vec3 cameraUp = glm::vec3(0, 1, 0);
 
-float deltaTime = 0.0f;
+float deltaFrame = 0.0f;
 float lastFrame = 0.0f;
+
+Camera camera(screenWidth, screenHeight);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
+}
 
-	glm::quat myQuat;
-	glm::toMat4(myQuat);
+void mouse_move_callback(GLFWwindow* window, double xpos, double ypos) {
+	camera.OnMouseMove(xpos, ypos);
+}
 
+void mouse_click_callback(GLFWwindow* window, int button, int action, int mods) {
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		if (action == GLFW_PRESS) {
+			camera.OnMouseDown();
+		}
+		else if (action == GLFW_RELEASE) {
+			camera.OnMouseUp();
+		}
+	}
+}
+
+void key_click_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	
+	if (action != GLFW_PRESS) {
+		return;
+	}
+
+	switch (key)
+	{
+	case GLFW_KEY_ESCAPE:
+		glfwSetWindowShouldClose(window, true);
+		break;
+	default:
+		camera.OnKeyboard(key);
+		break;
+	}
+}
+
+void scroll_callback(GLFWwindow* window, double xOffset, double yOffset) {
+	camera.OnMouseScroll(xOffset, yOffset);
 }
 
 void processInput(GLFWwindow* window) {
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-		glfwSetWindowShouldClose(window, true);
-	}
-	float cameraSpeed = 5.0f * deltaTime;
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		cameraPos += cameraSpeed * cameraFront;
+		camera.OnKeyboard(GLFW_KEY_W);
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		cameraPos -= cameraSpeed * cameraFront;
+		camera.OnKeyboard(GLFW_KEY_S);
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		camera.OnKeyboard(GLFW_KEY_A);
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		camera.OnKeyboard(GLFW_KEY_D);
 	}
-}
-
-void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-
 }
 
 int main(int argc, char** argv) {
@@ -72,7 +96,10 @@ int main(int argc, char** argv) {
 	glViewport(0, 0, screenWidth, screenHeight);
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetCursorPosCallback(window, mouse_move_callback);//鼠标移动
+	glfwSetMouseButtonCallback(window, mouse_click_callback);//鼠标点击
+	glfwSetKeyCallback(window, key_click_callback);//键盘按下
+	glfwSetScrollCallback(window, scroll_callback);//鼠标滚轮
 
 	//准备数据
 	float vertices[] = {
@@ -218,23 +245,25 @@ int main(int argc, char** argv) {
 
 	while (!glfwWindowShouldClose(window))
 	{
-		processInput(window);
-
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//绘制
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);//线框模式
 		float currentFrame = glfwGetTime();
-		deltaTime = currentFrame - lastFrame;
+		deltaFrame = currentFrame - lastFrame;
 		lastFrame = currentFrame;
+
+		processInput(window);
 		
 		ourShader.use();
+		camera.Render(currentFrame, deltaFrame);
+
 		glm::mat4 view;
-		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+		view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
 
 		glm::mat4 projection;
-		projection = glm::perspective(glm::radians(45.0f), screenWidth / screenHeight, 1.0f, 100.0f);
+		projection = glm::perspective(glm::radians(camera.GetFov()), screenWidth / screenHeight, 1.0f, 100.0f);
 
 		ourShader.setMatrix4fv("view", glm::value_ptr(view));
 		ourShader.setMatrix4fv("projection", glm::value_ptr(projection));
