@@ -9,7 +9,7 @@
 
 Camera::Camera(float windowWidth, float windowHeight)
 {
-	m_pos = glm::vec3(0, 0, 3);
+	m_pos = glm::vec3(0, 0, 6);
 	m_target = glm::vec3(0, 0, -1);
 	m_up = glm::vec3(0, 1, 0);
 	m_curFrame = 0;
@@ -59,15 +59,19 @@ void Camera::OnKeyboard(int key)
 	switch (key)
 	{
 	case GLFW_KEY_W:
+	case GLFW_KEY_UP:
 		m_pos += cameraSpeed * m_target;
 		break;
 	case GLFW_KEY_S:
+	case GLFW_KEY_DOWN:
 		m_pos -= cameraSpeed * m_target;
 		break;
 	case GLFW_KEY_A:
+	case GLFW_KEY_LEFT:
 		m_pos -= glm::normalize(glm::cross(m_target, m_up)) * cameraSpeed;
 		break;
 	case GLFW_KEY_D:
+	case GLFW_KEY_RIGHT:
 		m_pos += glm::normalize(glm::cross(m_target, m_up)) * cameraSpeed;
 		break;
 	default:

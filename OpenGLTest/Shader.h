@@ -24,6 +24,10 @@ public:
 
 	void setFloat4(const std::string& name, float x, float y, float z, float w);
 
+	void setFloat3(const std::string& name, float x, float y, float z);
+
 	void setMatrix4fv(const std::string& name, float* value);
+
+	void setMatrix3fv(const std::string& name, float* value);
 };
 
