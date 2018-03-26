@@ -245,6 +245,7 @@ int main(int argc, char** argv) {
 
 	//加载漫反射纹理
 	unsigned int diffuseTex = loadTexture("resources/container2.png");
+	unsigned int specularTex = loadTexture("resources/container2_specular.png");
 
 	//使用着色器类
 	Shader objShader("shaders/shader.vs", "shaders/shader.fs");
@@ -283,7 +284,7 @@ int main(int argc, char** argv) {
 
 		objShader.setFloat3("viewPos", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
 		objShader.setInt("material.diffuse", 0);
-		objShader.setFloat3("material.specular", 0.5f, 0.5f, 0.5f);
+		objShader.setInt("material.specular", 1);
 		objShader.setFloat("material.shininess", 32.0f);
 
 		objShader.setFloat3("light.ambient", 0.2f, 0.2f, 0.2f);
@@ -293,6 +294,8 @@ int main(int argc, char** argv) {
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuseTex);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, specularTex);
 
 		glBindVertexArray(VAO);
 		for (unsigned int i = 0; i < 1; i++) {
