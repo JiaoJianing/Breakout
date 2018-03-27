@@ -10,6 +10,7 @@
 #include "Shader.h"
 #include "stb_image.h"
 #include "Camera.h"
+#include "Model.h"
 
 float screenWidth = 800, screenHeight = 600;
 
@@ -85,37 +86,6 @@ void processInput(GLFWwindow* window) {
 	}
 }
 
-unsigned int loadTexture(const char* path){
-	unsigned int textureID;
-	glGenTextures(1, &textureID);
-
-	int width, height, nrComponents;
-	unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
-	if (data) {
-		GLenum format;
-		if (nrComponents == 1) format = GL_RED;
-		else if (nrComponents == 3) format = GL_RGB;
-		else if (nrComponents == 4) format = GL_RGBA;
-
-		glBindTexture(GL_TEXTURE_2D, textureID);
-		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		//设置纹理环绕、过滤方式
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		stbi_image_free(data);
-	}
-	else {
-		std::cout << "Failed to load diffuseTex" << std::endl;
-		stbi_image_free(data);
-	}
-
-	return textureID;
-}
 int main(int argc, char** argv) {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -145,113 +115,6 @@ int main(int argc, char** argv) {
 	glfwSetKeyCallback(window, key_click_callback);//键盘按下
 	glfwSetScrollCallback(window, scroll_callback);//鼠标滚轮
 
-	//准备数据
-	float vertices[] = {
-		//位置			     uv坐标	  法线
-		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,  0.0f, -1.0f,
-		0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  0.0f, -1.0f,
-		0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  0.0f, -1.0f,
-		0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  0.0f, -1.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, -1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,  0.0f, -1.0f,
-
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,0.0f,  0.0f, 1.0f,
-		0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-		0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,  0.0f, 1.0f,
-		0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,  0.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,0.0f,  0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,0.0f,  0.0f, 1.0f,
-
-		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f, -1.0f,  0.0f,  0.0f,
-		-0.5f,  0.5f, -0.5f,  1.0f, 1.0f, -1.0f,  0.0f,  0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, -1.0f,  0.0f,  0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, -1.0f,  0.0f,  0.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, -1.0f,  0.0f,  0.0f,
-		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f, -1.0f,  0.0f,  0.0f,
-
-		0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 1.0f,  0.0f,  0.0f,
-		0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f,  0.0f,
-		0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.0f,  0.0f,  0.0f,
-		0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.0f,  0.0f,  0.0f,
-		0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  0.0f,  0.0f,
-		0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 1.0f,  0.0f,  0.0f,
-
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, -1.0f,  0.0f,
-		0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 0.0f, -1.0f,  0.0f,
-		0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f, -1.0f,  0.0f,
-		0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f, -1.0f,  0.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,0.0f, -1.0f,  0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,0.0f, -1.0f,  0.0f,
-
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f,  0.0f,
-		0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f,  1.0f,  0.0f,
-		0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  0.0f,  1.0f,  0.0f,
-		0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  0.0f,  1.0f,  0.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  1.0f,  0.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  0.0f,  1.0f,  0.0f
-	};
-	//unsigned int indices[] = {
-	//	0, 1, 3,//第一个三角形
-	//	1, 2, 3//第二个三角形
-	//};
-	glm::vec3 cubePositions[] = {
-		glm::vec3(0.0f,  0.0f,  0.0f),
-		glm::vec3(2.0f,  5.0f, -15.0f),
-		glm::vec3(-1.5f, -2.2f, -2.5f),
-		glm::vec3(-3.8f, -2.0f, -12.3f),
-		glm::vec3(2.4f, -0.4f, -3.5f),
-		glm::vec3(-1.7f,  3.0f, -7.5f),
-		glm::vec3(1.3f, -2.0f, -2.5f),
-		glm::vec3(1.5f,  2.0f, -2.5f),
-		glm::vec3(1.5f,  0.2f, -1.5f),
-		glm::vec3(-1.3f,  1.0f, -1.5f)
-	};
-
-	unsigned int VBO;
-	glGenBuffers(1, &VBO);
-	unsigned int EBO;
-	glGenBuffers(1, &EBO);
-
-	//创建VAO
-	unsigned int VAO;
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
-	//绑定顶点缓冲
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	//绑定索引缓冲
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-	//设置数据排布
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
-	glEnableVertexAttribArray(2);
-
-	glBindVertexArray(0);
-
-#pragma region 灯的VAO
-	unsigned int lightVAO;
-	glGenVertexArrays(1, &lightVAO);
-	glBindVertexArray(lightVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	glBindVertexArray(0);
-#pragma endregion
-
-	//垂直坐标翻转
-	stbi_set_flip_vertically_on_load(true);
-	//加载漫反射纹理
-	unsigned int diffuseTex = loadTexture("resources/container2.png");
-	unsigned int specularTex = loadTexture("resources/container2_specular.png");
-
-	//使用着色器类
-	Shader objShader("shaders/shader.vs", "shaders/shader.fs");
-	Shader lightShader("shaders/light.vs", "shaders/light.fs");
-
 	//查询最多支持多少顶点属性
 	int nrAttributes;
 	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
@@ -269,13 +132,14 @@ int main(int argc, char** argv) {
 	};
 #pragma endregion
 
-	objShader.use();
-	objShader.setInt("material.diffuse", 0);
-	objShader.setInt("material.specular", 1);
+	std::string path = "models/nanosuit/nanosuit.obj";
+	Model nanosuit(path.c_str());
+
+	Shader modelShader("shaders/nanosuit.vs", "shaders/nanosuit.fs");
 
 	while (!glfwWindowShouldClose(window))
 	{
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//绘制
@@ -285,93 +149,65 @@ int main(int argc, char** argv) {
 		lastFrame = currentFrame;
 
 		processInput(window);
-		
-		//绘制箱子
-		objShader.use();
+
+#pragma region 绘制模型
+		modelShader.use();
+
 		camera.Render(currentFrame, deltaFrame);
 
 		glm::mat4 view;
 		view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
 		glm::mat4 projection;
 		projection = glm::perspective(glm::radians(camera.GetFov()), screenWidth / screenHeight, 1.0f, 100.0f);
-		objShader.setMatrix4fv("view", glm::value_ptr(view));
-		objShader.setMatrix4fv("projection", glm::value_ptr(projection));
+		glm::mat4 model;
+		model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
+		glm::mat3 normalMat;
+		normalMat = glm::transpose(glm::inverse(model));
 
-		objShader.setFloat3("viewPos", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
-		objShader.setFloat("material.shininess", 32.0f);
+		modelShader.setMatrix4fv("view", glm::value_ptr(view));
+		modelShader.setMatrix4fv("projection", glm::value_ptr(projection));
+		modelShader.setMatrix4fv("model", glm::value_ptr(model));
+		modelShader.setMatrix3fv("normalMat", glm::value_ptr(normalMat));
+
+		modelShader.setFloat3("viewPos", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
+		modelShader.setFloat("material.shininess", 32.0f);
 
 		//平行光
-		objShader.setFloat3("dirLight.direction", dirLightDirection.x, dirLightDirection.y, dirLightDirection.z);
-		objShader.setFloat3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-		objShader.setFloat3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
-		objShader.setFloat3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+		modelShader.setFloat3("dirLight.direction", dirLightDirection.x, dirLightDirection.y, dirLightDirection.z);
+		modelShader.setFloat3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+		modelShader.setFloat3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+		modelShader.setFloat3("dirLight.specular", 0.5f, 0.5f, 0.5f);
 
 		//点光源
 		for (int i = 0; i < 4; i++) {
-			objShader.setFloat3(("pointLights[" + std::to_string(i) + "]" + ".position").c_str(), pointLightPositions[i].x, pointLightPositions[i].y, pointLightPositions[i].z);
-			objShader.setFloat3(("pointLights[" + std::to_string(i) + "]" + ".ambient").c_str(), 0.05f, 0.05f, 0.05f);
-			objShader.setFloat3(("pointLights[" + std::to_string(i) + "]" + ".diffuse").c_str(), 0.8f, 0.8f, 0.8f);
-			objShader.setFloat3(("pointLights[" + std::to_string(i) + "]" + ".specular").c_str(), 1.0f, 1.0f, 1.0f);
-			objShader.setFloat(("pointLights[" + std::to_string(i) + "]" + ".constant").c_str(), 1.0f);
-			objShader.setFloat(("pointLights[" + std::to_string(i) + "]" + "linear").c_str(), 0.09f);
-			objShader.setFloat(("pointLights[" + std::to_string(i) + "]" + "quadratic").c_str(), 0.032f);
+			modelShader.setFloat3(("pointLights[" + std::to_string(i) + "]" + ".position").c_str(), pointLightPositions[i].x, pointLightPositions[i].y, pointLightPositions[i].z);
+			modelShader.setFloat3(("pointLights[" + std::to_string(i) + "]" + ".ambient").c_str(), 0.05f, 0.05f, 0.05f);
+			modelShader.setFloat3(("pointLights[" + std::to_string(i) + "]" + ".diffuse").c_str(), 0.8f, 0.8f, 0.8f);
+			modelShader.setFloat3(("pointLights[" + std::to_string(i) + "]" + ".specular").c_str(), 1.0f, 1.0f, 1.0f);
+			modelShader.setFloat(("pointLights[" + std::to_string(i) + "]" + ".constant").c_str(), 1.0f);
+			modelShader.setFloat(("pointLights[" + std::to_string(i) + "]" + "linear").c_str(), 0.09f);
+			modelShader.setFloat(("pointLights[" + std::to_string(i) + "]" + "quadratic").c_str(), 0.032f);
 		}
 
 		//聚光灯
-		objShader.setFloat3("spotLight.position", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
-		objShader.setFloat3("spotLight.direction", camera.GetTarget().x, camera.GetTarget().y, camera.GetTarget().z);
-		objShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
-		objShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
-		objShader.setFloat3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
-		objShader.setFloat3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
-		objShader.setFloat3("spotLight.specular", 1.0f, 1.0f, 1.0f);
-		objShader.setFloat("spotLight.constant", 1.0f);
-		objShader.setFloat("spotLight.linear", 0.09);
-		objShader.setFloat("spotLight.quadratic", 0.032);
+		modelShader.setFloat3("spotLight.position", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
+		modelShader.setFloat3("spotLight.direction", camera.GetTarget().x, camera.GetTarget().y, camera.GetTarget().z);
+		modelShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
+		modelShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
+		modelShader.setFloat3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
+		modelShader.setFloat3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
+		modelShader.setFloat3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+		modelShader.setFloat("spotLight.constant", 1.0f);
+		modelShader.setFloat("spotLight.linear", 0.09);
+		modelShader.setFloat("spotLight.quadratic", 0.032);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, diffuseTex);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, specularTex);
-
-		glBindVertexArray(VAO);
-		for (unsigned int i = 0; i < 10; i++) {
-			glm::mat4 model;
-			model = glm::translate(model, cubePositions[i]);
-			float angle = 20.0f * i;
-			model = glm::rotate(model, /*currentFrame * */glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-			objShader.setMatrix4fv("model", glm::value_ptr(model));
-			glm::mat3 normalMat;
-			normalMat = glm::transpose(glm::inverse(model));
-			objShader.setMatrix3fv("normalMat", glm::value_ptr(normalMat));
-			glDrawArrays(GL_TRIANGLES, 0, 36);
-		}
-		glBindVertexArray(0);
-
-		//绘制光源
-		lightShader.use();
-		lightShader.setMatrix4fv("view", glm::value_ptr(view));
-		lightShader.setMatrix4fv("projection", glm::value_ptr(projection));
-
-		glBindVertexArray(lightVAO);
-		for (int i = 0; i < 4; i++) {
-			glm::mat4 model;
-			model = glm::translate(model, pointLightPositions[i]);
-			model = glm::scale(model, glm::vec3(0.2f));
-			lightShader.setMatrix4fv("model", glm::value_ptr(model));
-			lightShader.setFloat3("lightColor", 1.0f, 1.0f, 1.0f);
-
-			glDrawArrays(GL_TRIANGLES, 0, 36);
-		}
-		glBindVertexArray(0);
+		nanosuit.Draw(modelShader);
+#pragma endregion
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteVertexArrays(1, &lightVAO);
-	glDeleteBuffers(1, &VBO);
 
 	glfwTerminate();
 	return 0;
