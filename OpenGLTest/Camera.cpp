@@ -9,7 +9,7 @@
 
 Camera::Camera(float windowWidth, float windowHeight)
 {
-	m_pos = glm::vec3(0, 0, 6);
+	m_pos = glm::vec3(0, 0, 3);
 	m_target = glm::vec3(0, 0, -1);
 	m_up = glm::vec3(0, 1, 0);
 	m_curFrame = 0;
