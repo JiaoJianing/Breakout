@@ -132,7 +132,7 @@ int main(int argc, char** argv) {
 	};
 #pragma endregion
 
-	std::string path = "models/FMP_BAYI_02/scene.obj";
+	std::string path = "models/nanosuit/nanosuit.obj";
 	Model nanosuit(path.c_str());
 
 	Shader modelShader("shaders/nanosuit.vs", "shaders/nanosuit.fs");
@@ -160,8 +160,8 @@ int main(int argc, char** argv) {
 		glm::mat4 projection;
 		projection = glm::perspective(glm::radians(camera.GetFov()), screenWidth / screenHeight, 1.0f, 100.0f);
 		glm::mat4 model;
-		model = glm::translate(model, glm::vec3(0.0f, -5.75f, 0.0f));
-		model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f));
+		model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
 		glm::mat3 normalMat;
 		normalMat = glm::transpose(glm::inverse(model));
 
