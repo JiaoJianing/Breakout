@@ -40,7 +40,7 @@ Camera::Camera(float windowWidth, float windowHeight, const glm::vec3& pos, cons
 	m_firstMouse = true;
 	m_mousePress = false;
 	m_mouseSensitivity = 5;
-	m_keySensitivity = 0.5f;
+	m_keySensitivity = 5;
 	m_windowWidth = windowWidth;
 	m_windowHeight = windowHeight;
 	m_yaw = -90.0f;
