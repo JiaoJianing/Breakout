@@ -73,8 +73,8 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 		glm::vec2 texCoord;
 		if (mesh->mTextureCoords[0])//检查是否有纹理
 		{
-			texCoord.x = mesh->mTextureCoords[0]->x;
-			texCoord.y = mesh->mTextureCoords[0]->y;
+			texCoord.x = mesh->mTextureCoords[0][i].x;
+			texCoord.y = mesh->mTextureCoords[0][i].y;
 		}
 		vertex.texCoord = texCoord;
 
