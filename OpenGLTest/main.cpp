@@ -6,6 +6,7 @@
 #include <gtc/quaternion.hpp>
 #include <gtx/quaternion.hpp>
 #include <iostream>
+#include <map>
 #include <string>
 #include "Shader.h"
 #include "stb_image.h"
@@ -154,6 +155,9 @@ int main(int argc, char** argv) {
 	//glDepthFunc(GL_ALWAYS);
 	glDepthFunc(GL_LESS);
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_move_callback);//鼠标移动
 	glfwSetMouseButtonCallback(window, mouse_click_callback);//鼠标点击
@@ -224,13 +228,18 @@ int main(int argc, char** argv) {
 		-0.5f, 0.5f, 0.0f, 0.0f, 1.0f
 	};
 
+	//窗户位置
+	std::vector<glm::vec3> windowPositions;
+	windowPositions.push_back(glm::vec3(-1.5f, 0.0f, -0.48f));
+	windowPositions.push_back(glm::vec3(1.5f, 0.0f, 0.61f));
+	windowPositions.push_back(glm::vec3(0.0f, 0.0f, 0.7f));
+	windowPositions.push_back(glm::vec3(-0.3f, 0.0f, -2.3f));
+	windowPositions.push_back(glm::vec3(0.5f, 0.0f, -0.6f));
 	//草丛位置
 	std::vector<glm::vec3> grassPositions;
-	grassPositions.push_back(glm::vec3(-1.5f, 0.0f, -0.48f));
-	grassPositions.push_back(glm::vec3(1.5f, 0.0f, 0.51f));
-	grassPositions.push_back(glm::vec3(0.0f, 0.0f, 0.7f));
-	grassPositions.push_back(glm::vec3(-0.3f, 0.0f, -2.3f));
-	grassPositions.push_back(glm::vec3(0.5f, 0.0f, -0.6f));
+	grassPositions.push_back(glm::vec3(-2.5f, 0.0f, -0.3f));
+	grassPositions.push_back(glm::vec3(0.5f, 0.0f, 0.41f));
+	grassPositions.push_back(glm::vec3(1.0f, 0.0f, 0.6f));
 
 	// 立方体 VAO
 	unsigned int cubeVAO, cubeVBO;
@@ -256,6 +265,18 @@ int main(int argc, char** argv) {
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glBindVertexArray(0);
+	//窗户 VAO
+	unsigned int windowVAO, windowVBO;
+	glGenVertexArrays(1, &windowVAO);
+	glGenBuffers(1, &windowVBO);
+	glBindVertexArray(windowVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, windowVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(grassVertices), &grassVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glBindVertexArray(0);
 	//草丛 VAO
 	unsigned int grassVAO, grassVBO;
 	glGenVertexArrays(1, &grassVAO);
@@ -274,6 +295,7 @@ int main(int argc, char** argv) {
 	stbi_set_flip_vertically_on_load(true);
 	unsigned int cubeTexture = loadTexture("resources/marble.jpg");
 	unsigned int floorTexture = loadTexture("resources/metal.png");
+	unsigned int windowTexture = loadTexture("resources/blending_transparent_window.png");
 	unsigned int grassTexture = loadTexture("resources/grass.png");
 
 	Shader shader("shaders/depth_test.vs", "shaders/depth_test.fs");
@@ -302,6 +324,16 @@ int main(int argc, char** argv) {
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f), screenWidth / screenHeight, 0.1f, 100.0f);
 		shader.setMatrix4fv("view", glm::value_ptr(view));
 		shader.setMatrix4fv("projection", value_ptr(projection));
+
+		//启用混合时：
+		//1. 先绘制不透明的物体 
+		//2. 对透明物体排序（对于草丛这种物体(alpha不全是1)，若看成透明物体的话，
+		//也要参加排序，否则需要在shader中进行处理，alpha小于一定阈值时舍弃,
+		//防止草丛在透明物体前边，透明物体绘制时由于深度测试被舍弃）
+		//3. 从远到近绘制透明物体
+
+		//次序无关透明度（OIT）是更好的解决方法。
+		
 		// 两个立方体
 		glBindVertexArray(cubeVAO);
 		glActiveTexture(GL_TEXTURE0);
@@ -323,9 +355,26 @@ int main(int argc, char** argv) {
 		//草丛
 		glBindVertexArray(grassVAO);
 		glBindTexture(GL_TEXTURE_2D, grassTexture);
-		for (int i = 0; i < grassPositions.size(); i++) {
+		for (unsigned int i = 0; i < grassPositions.size(); i++) {
 			model = glm::mat4();
 			model = glm::translate(model, grassPositions[i]);
+			shader.setMatrix4fv("model", glm::value_ptr(model));
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+		}
+		glBindVertexArray(0);
+		//窗户
+		glBindVertexArray(windowVAO);
+		glBindTexture(GL_TEXTURE_2D, windowTexture);
+		//窗户根据与观察者距离排序
+		std::map<float, glm::vec3> sorted;
+		for (unsigned int i = 0; i < windowPositions.size(); i++) {
+			float distance = glm::length(camera.GetPos() - windowPositions[i]);
+			sorted[distance] = windowPositions[i];
+		}
+
+		for (std::map<float, glm::vec3>::reverse_iterator it = sorted.rbegin(); it != sorted.rend(); it++) {
+			model = glm::mat4();
+			model = glm::translate(model, it->second);
 			shader.setMatrix4fv("model", glm::value_ptr(model));
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 		}
@@ -338,9 +387,11 @@ int main(int argc, char** argv) {
 	// 清除操作
 	glDeleteVertexArrays(1, &cubeVAO);
 	glDeleteVertexArrays(1, &planeVAO);
+	glDeleteVertexArrays(1, &windowVAO);
 	glDeleteVertexArrays(1, &grassVAO);
 	glDeleteBuffers(1, &cubeVBO);
 	glDeleteVertexArrays(1, &planeVBO);
+	glDeleteBuffers(1, &windowVBO);
 	glDeleteBuffers(1, &grassVBO);
 
 	glfwTerminate();
