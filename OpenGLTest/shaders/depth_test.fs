@@ -14,8 +14,12 @@ float linearizeDepth(float depth){
 	return (2.0 * near * far) /(far + near - z * (far - near));
 } 
 void main()
-{	
-	FragColor = texture(texture1, texCoord);
+{
+	vec4 texColor = texture(texture1, texCoord);
+	if(texColor.a < 0.01){
+		discard;
+	}
+	FragColor = texColor;
 
 	//输出深度缓冲中的z值(默认：非线性,由于经过了投影变换的处理)
 	//FragColor = vec4(vec3(gl_FragCoord.z), 1.0);
