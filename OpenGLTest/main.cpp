@@ -148,6 +148,10 @@ int main(int argc, char** argv) {
 	//glDepthFunc(GL_ALWAYS);
 	glDepthFunc(GL_LESS);
 
+	//启用模板测试，测试通过的话模板值替换为我们定义的1
+	glEnable(GL_STENCIL_TEST);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_move_callback);//鼠标移动
 	glfwSetMouseButtonCallback(window, mouse_click_callback);//鼠标点击
@@ -238,32 +242,46 @@ int main(int argc, char** argv) {
 	unsigned int floorTexture = loadTexture("resources/metal.png");
 
 	Shader shader("shaders/depth_test.vs", "shaders/depth_test.fs");
+	Shader outline("shaders/depth_test.vs", "shaders/outline.fs");
 
 	shader.use();
 	shader.setInt("texture1", 0);
 
 	while (!glfwWindowShouldClose(window))
 	{
+		processInput(window);
+
 		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		//绘制
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);//线框模式
 		float currentFrame = glfwGetTime();
 		deltaFrame = currentFrame - lastFrame;
 		lastFrame = currentFrame;
-
-		processInput(window);
 		camera.Render(currentFrame, deltaFrame);
+
+		glm::mat4 model;
+		glm::mat4 view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
+		glm::mat4 projection = glm::perspective(glm::radians(camera.GetFov()), screenWidth / screenHeight, 0.1f, 100.0f);
 
 		//开始渲染
 		shader.use();
-		glm::mat4 model;
-		glm::mat4 view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
-		glm::mat4 projection = glm::perspective(glm::radians(45.0f), screenWidth / screenHeight, 0.1f, 100.0f);
 		shader.setMatrix4fv("view", glm::value_ptr(view));
 		shader.setMatrix4fv("projection", value_ptr(projection));
-		// 两个立方体
+		// 地面
+		glStencilMask(0x00);//绘制地面时不允许更新模板缓冲
+		glBindVertexArray(planeVAO);
+		glBindTexture(GL_TEXTURE_2D, floorTexture);
+		model = glm::mat4();
+		shader.setMatrix4fv("model", value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);//更新所有片段的模板缓冲
+		glStencilMask(0xFF);//启用模板缓冲写入
+
+		//渲染两个正常大小的立方体，会把所有通过模板和深度测试的片段模板值更新为1
 		glBindVertexArray(cubeVAO);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, cubeTexture);
@@ -274,13 +292,32 @@ int main(int argc, char** argv) {
 		model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
 		shader.setMatrix4fv("model", value_ptr(model));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
-		// 地面
-		glBindVertexArray(planeVAO);
-		glBindTexture(GL_TEXTURE_2D, floorTexture);
+
+		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);//只绘制模板缓冲不为1的片段
+		glStencilMask(0x00);//禁止模板缓冲的写入
+		glDisable(GL_DEPTH_TEST);//禁用深度测试，防止边框被靠前的地面覆盖
+		
+		//绘制放大一丢丢的两个立方体
+		outline.use();
+		outline.setMatrix4fv("view", glm::value_ptr(view));
+		outline.setMatrix4fv("projection", value_ptr(projection));
+		glBindVertexArray(cubeVAO);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, cubeTexture);
 		model = glm::mat4();
-		shader.setMatrix4fv("model", value_ptr(model));
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		model = glm::translate(model, glm::vec3(-1.0f, 0.0f, -1.0f));
+		model = glm::scale(model, glm::vec3(1.01f));
+		outline.setMatrix4fv("model", value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(1.01f));
+		outline.setMatrix4fv("model", value_ptr(model));
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
+
+		glStencilMask(0xFF);
+		glEnable(GL_DEPTH_TEST);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
