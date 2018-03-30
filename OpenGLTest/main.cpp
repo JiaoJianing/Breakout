@@ -216,8 +216,8 @@ int main(int argc, char** argv) {
 		-5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
 
 		5.0f, -0.5f,  5.0f,  2.0f, 0.0f,
-		-5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
-		5.0f, -0.5f, -5.0f,  2.0f, 2.0f
+-5.0f, -0.5f, -5.0f, 0.0f, 2.0f,
+5.0f, -0.5f, -5.0f, 2.0f, 2.0f
 	};
 	float grassVertices[] = {
 		//位置             纹理坐标
@@ -227,6 +227,15 @@ int main(int argc, char** argv) {
 		0.5f, -0.5, 0.0f, 1.0f, 0.0f,
 		0.5f, 0.5f, 0.0f, 1.0f, 1.0f,
 		-0.5f, 0.5f, 0.0f, 0.0f, 1.0f
+	};
+	float fullScreenVertices[] = {
+		//位置             纹理坐标
+		-1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+		1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+		1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+		1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f, 0.0f, 0.0f, 1.0f
 	};
 
 	//窗户位置
@@ -290,6 +299,52 @@ int main(int argc, char** argv) {
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glBindVertexArray(0);
+	//全屏 VAO
+	unsigned int fullScreenVAO, fullScreenVBO;
+	glGenVertexArrays(1, &fullScreenVAO);
+	glGenBuffers(1, &fullScreenVBO);
+	glBindVertexArray(fullScreenVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, fullScreenVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(fullScreenVertices), &fullScreenVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glBindVertexArray(0);
+
+#pragma region 配置帧缓冲
+	unsigned int framebuffer;
+	glGenFramebuffers(1, &framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+	//生成纹理
+	unsigned int texColorBuffer;
+	glGenTextures(1, &texColorBuffer);
+	glBindTexture(GL_TEXTURE_2D, texColorBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenWidth, screenHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	//附加到帧缓冲的颜色附件
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0);
+
+	//生成深度、模板渲染缓冲
+	unsigned int rbo;
+	glGenRenderbuffers(1, &rbo);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screenWidth, screenHeight);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	//附加到帧缓冲的深度、模板附件
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+	//检查帧缓冲完整性
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		std::cout << "FrameBuffer not completed!" << std::endl;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+#pragma endregion
 
 	// 加载纹理
 	//翻转纹理y坐标
@@ -300,15 +355,15 @@ int main(int argc, char** argv) {
 	unsigned int grassTexture = loadTexture("resources/grass.png");
 
 	Shader shader("shaders/depth_test.vs", "shaders/depth_test.fs");
+	Shader fullscreenShader("shaders/full_screen.vs", "shaders/full_screen.fs");
 
+	fullscreenShader.use();
+	fullscreenShader.setInt("texture1", 0);
 	shader.use();
 	shader.setInt("texture1", 0);
 
 	while (!glfwWindowShouldClose(window))
 	{
-		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 		//绘制
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);//线框模式
 		float currentFrame = glfwGetTime();
@@ -318,11 +373,19 @@ int main(int argc, char** argv) {
 		processInput(window);
 		camera.Render(currentFrame, deltaFrame);
 
-		//开始渲染
-		shader.use();
 		glm::mat4 model;
 		glm::mat4 view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
-		glm::mat4 projection = glm::perspective(glm::radians(45.0f), screenWidth / screenHeight, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(camera.GetFov()), screenWidth / screenHeight, 0.1f, 100.0f);
+
+#pragma region 渲染到framebuffer
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		//开始渲染
+		glEnable(GL_DEPTH_TEST);
+		shader.use();
 		shader.setMatrix4fv("view", glm::value_ptr(view));
 		shader.setMatrix4fv("projection", value_ptr(projection));
 
@@ -334,7 +397,7 @@ int main(int argc, char** argv) {
 		//3. 从远到近绘制透明物体
 
 		//次序无关透明度（OIT）是更好的解决方法。
-		
+
 		// 两个立方体,背面剔除效果只对像立方体这种封闭形状有效，可以有效节省性能。
 		glEnable(GL_CULL_FACE);
 
@@ -385,6 +448,21 @@ int main(int argc, char** argv) {
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 		}
 		glBindVertexArray(0);
+		//解绑framebuffer
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+#pragma endregion
+
+#pragma  region 渲染到默认帧缓冲
+		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glDisable(GL_DEPTH_TEST);
+		fullscreenShader.use();
+		glBindVertexArray(fullScreenVAO);
+		glBindTexture(GL_TEXTURE_2D, texColorBuffer);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+#pragma endregion
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -395,10 +473,12 @@ int main(int argc, char** argv) {
 	glDeleteVertexArrays(1, &planeVAO);
 	glDeleteVertexArrays(1, &windowVAO);
 	glDeleteVertexArrays(1, &grassVAO);
+	glDeleteVertexArrays(1, &fullScreenVAO);
 	glDeleteBuffers(1, &cubeVBO);
 	glDeleteVertexArrays(1, &planeVBO);
 	glDeleteBuffers(1, &windowVBO);
 	glDeleteBuffers(1, &grassVBO);
+	glDeleteBuffers(1, &fullScreenVBO);
 
 	glfwTerminate();
 	return 0;
