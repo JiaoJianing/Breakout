@@ -334,6 +334,26 @@ int main(int argc, char** argv) {
 	shader.use();
 	shader.setInt("skybox", 3);
 
+#pragma region 使用UBO
+	//获取Unoform Block 位置索引
+	unsigned int uMatIdxShader = glGetUniformBlockIndex(shader.ID, "Matrices");
+	unsigned int uMatIdxSkyboxShader = glGetUniformBlockIndex(skyboxShader.ID, "Matrices");
+	unsigned int uMatIdxCubeShader = glGetUniformBlockIndex(cubeShader.ID, "Matrices");
+
+	//设置绑定点，例子绑定到0
+	glUniformBlockBinding(shader.ID, uMatIdxShader, 0);
+	glUniformBlockBinding(skyboxShader.ID, uMatIdxSkyboxShader, 0);
+	glUniformBlockBinding(cubeShader.ID, uMatIdxCubeShader, 0);
+
+	//创建UBO，并绑定到点0
+	unsigned int uboMatrices;
+	glGenBuffers(1, &uboMatrices);
+	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 2 * sizeof(glm::mat4));
+#pragma endregion
+
 	while (!glfwWindowShouldClose(window))
 	{
 		//绘制
@@ -349,14 +369,17 @@ int main(int argc, char** argv) {
 		glm::mat4 view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
 		glm::mat4 projection = glm::perspective(glm::radians(camera.GetFov()), screenWidth / screenHeight, 0.1f, 100.0f);
 
+		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+		glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(view));
+		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(projection));
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
 		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//开始渲染
 		//画模型
 		shader.use();
-		shader.setMatrix4fv("view", glm::value_ptr(view));
-		shader.setMatrix4fv("projection", value_ptr(projection));
 		model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f));
 		model = glm::scale(model, glm::vec3(0.2f));
 		shader.setMatrix4fv("model", value_ptr(model));
@@ -401,8 +424,6 @@ int main(int argc, char** argv) {
 
 		//画箱子
 		cubeShader.use();
-		cubeShader.setMatrix4fv("view", glm::value_ptr(view));
-		cubeShader.setMatrix4fv("projection", value_ptr(projection));
 		model = glm::mat4();
 		model = glm::translate(model, glm::vec3(-2.0f, 0.0f, 0.0f));
 		cubeShader.setMatrix4fv("model", value_ptr(model));
