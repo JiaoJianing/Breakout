@@ -178,7 +178,7 @@ int main(int argc, char** argv) {
 
 	glViewport(0, 0, screenWidth, screenHeight);
 
-	//glEnable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_TEST);
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_move_callback);//鼠标移动
@@ -186,26 +186,9 @@ int main(int argc, char** argv) {
 	glfwSetKeyCallback(window, key_click_callback);//键盘按下
 	glfwSetScrollCallback(window, scroll_callback);//鼠标滚轮
 
-	float points[] = {
-		-0.5f,  0.5f, 1.0f, 0.0f, 0.0f, // 左上
-		0.5f,  0.5f, 0.0f, 1.0f, 0.0f, // 右上
-		0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // 右下
-		-0.5f, -0.5f, 1.0f, 1.0f, 0.0f  // 左下
-	};
+	Shader shader("shaders/nanosuit.vs", "shaders/nanosuit.fs", "shaders/nanosuit.gs");
 
-	unsigned int pointsVAO, pointsVBO;
-	glGenVertexArrays(1, &pointsVAO);
-	glGenBuffers(1, &pointsVBO);
-	glBindVertexArray(pointsVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, pointsVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(points), &points, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
-	glBindVertexArray(0);
-
-	Shader shader("shaders/geometry.vs", "shaders/geometry.fs", "shaders/geometry.gs");
+	Model nanosuit("models/nanosuit/nanosuit.obj");
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -218,13 +201,21 @@ int main(int argc, char** argv) {
 		processInput(window);
 		camera.Render(currentFrame, deltaFrame);
 
+		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		glm::mat4 model;
+		model = glm::translate(model, glm::vec3(0.0, -1.75, 0.0));
+		model = glm::scale(model, glm::vec3(0.2f));
 		glm::mat4 view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
 		glm::mat4 projection = glm::perspective(glm::radians(camera.GetFov()), screenWidth / screenHeight, 0.1f, 100.0f);
 
 		shader.use();
-		glBindVertexArray(pointsVAO);
-		glDrawArrays(GL_POINTS, 0, 4);
+		shader.setMatrix4("model", model);
+		shader.setMatrix4("view", view);
+		shader.setMatrix4("projection", projection);
+		shader.setFloat("time", currentFrame);
+		nanosuit.Draw(shader);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
