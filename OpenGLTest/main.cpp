@@ -187,49 +187,48 @@ int main(int argc, char** argv) {
 	glfwSetScrollCallback(window, scroll_callback);//鼠标滚轮
 
 	float cubeVertices[] = {
-		//位置               纹理坐标
-		// Back face
-		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // Bottom-left
-		0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
-		0.5f, -0.5f, -0.5f,  1.0f, 0.0f, // bottom-right         
-		0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
-		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // bottom-left
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
-		// Front face
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
-		0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
-		0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
-		0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
-		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f, // top-left
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
-		// Left face
-		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
-		-0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-left
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
-		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
-		// Right face
-		0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
-		0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
-		0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right         
-		0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
-		0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
-		0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left     
-		// Bottom face
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
-		0.5f, -0.5f, -0.5f,  1.0f, 1.0f, // top-left
-		0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
-		0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
-		// Top face
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
-		0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
-		0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right     
-		0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
-		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f  // bottom-left      
+		//位置               法线
+		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+
+		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+
+		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+
+		0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+		0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+		0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+
+		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+
+		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+		0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+		0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
 	};
 
 	float skyboxVertices[] = {
@@ -284,9 +283,9 @@ int main(int argc, char** argv) {
 	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), &cubeVertices, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 	glBindVertexArray(0);
 	//天空盒VAO
 	unsigned int skyboxVAO, skyboxVBO;
@@ -312,13 +311,28 @@ int main(int argc, char** argv) {
 	};
 	unsigned int skyboxTexture = loadCubeMap(faces);
 
-	Shader shader("shaders/depth_test.vs", "shaders/depth_test.fs");
-	Shader skyboxShader("shaders/skybox.vs", "shaders/skybox.fs");
+#pragma region 光源属性准备
+	glm::vec3 dirLightDirection(-0.2f, -1.0f, -0.3f);
+	glm::vec3 pointLightPositions[] = {
+		glm::vec3(0.7f, 0.2f, 2.0f),
+		glm::vec3(2.3f, -3.3f, -4.0f),
+		glm::vec3(-4.0f,  2.0f, -12.0f),
+		glm::vec3(0.0f,  0.0f, -3.0f)
+	};
+#pragma endregion
 
-	shader.use();
-	shader.setInt("texture1", 0);
+	Shader shader("shaders/nanosuit.vs", "shaders/nanosuit.fs");
+	Shader skyboxShader("shaders/skybox.vs", "shaders/skybox.fs");
+	Shader cubeShader("shaders/depth_test.vs", "shaders/depth_test.fs");
+
+	Model nanosuit("models/nanosuit_reflection/nanosuit.obj");
+
 	skyboxShader.use();
 	skyboxShader.setInt("skybox", 0);
+	cubeShader.use();
+	cubeShader.setInt("skybox", 0);
+	shader.use();
+	shader.setInt("skybox", 3);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -339,14 +353,63 @@ int main(int argc, char** argv) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//开始渲染
-		//画箱子
+		//画模型
 		shader.use();
 		shader.setMatrix4fv("view", glm::value_ptr(view));
 		shader.setMatrix4fv("projection", value_ptr(projection));
-		model = glm::translate(model, glm::vec3(-1.0f, 0.0f, -1.0f));
+		model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.2f));
 		shader.setMatrix4fv("model", value_ptr(model));
+		glm::mat3 normalMat;
+		normalMat = glm::transpose(glm::inverse(model));
+		shader.setMatrix3fv("normalMat", glm::value_ptr(normalMat));
+
+		shader.setFloat3("viewPos", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
+		shader.setFloat("material.shininess", 32.0f);
+
+		//平行光
+		shader.setFloat3("dirLight.direction", dirLightDirection.x, dirLightDirection.y, dirLightDirection.z);
+		shader.setFloat3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+		shader.setFloat3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+		shader.setFloat3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+
+		//点光源
+		for (int i = 0; i < 4; i++) {
+			shader.setFloat3(("pointLights[" + std::to_string(i) + "]" + ".position").c_str(), pointLightPositions[i].x, pointLightPositions[i].y, pointLightPositions[i].z);
+			shader.setFloat3(("pointLights[" + std::to_string(i) + "]" + ".ambient").c_str(), 0.05f, 0.05f, 0.05f);
+			shader.setFloat3(("pointLights[" + std::to_string(i) + "]" + ".diffuse").c_str(), 0.8f, 0.8f, 0.8f);
+			shader.setFloat3(("pointLights[" + std::to_string(i) + "]" + ".specular").c_str(), 1.0f, 1.0f, 1.0f);
+			shader.setFloat(("pointLights[" + std::to_string(i) + "]" + ".constant").c_str(), 1.0f);
+			shader.setFloat(("pointLights[" + std::to_string(i) + "]" + "linear").c_str(), 0.09f);
+			shader.setFloat(("pointLights[" + std::to_string(i) + "]" + "quadratic").c_str(), 0.032f);
+		}
+
+		//聚光灯
+		shader.setFloat3("spotLight.position", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
+		shader.setFloat3("spotLight.direction", camera.GetTarget().x, camera.GetTarget().y, camera.GetTarget().z);
+		shader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
+		shader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
+		shader.setFloat3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
+		shader.setFloat3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
+		shader.setFloat3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+		shader.setFloat("spotLight.constant", 1.0f);
+		shader.setFloat("spotLight.linear", 0.09);
+		shader.setFloat("spotLight.quadratic", 0.032);
+		glActiveTexture(GL_TEXTURE0 + 3);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+		nanosuit.Draw(shader);
+
+		//画箱子
+		cubeShader.use();
+		cubeShader.setMatrix4fv("view", glm::value_ptr(view));
+		cubeShader.setMatrix4fv("projection", value_ptr(projection));
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(-2.0f, 0.0f, 0.0f));
+		cubeShader.setMatrix4fv("model", value_ptr(model));
+		cubeShader.setFloat3("cameraPos", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
 		glBindVertexArray(cubeVAO);
-		glBindTexture(GL_TEXTURE_2D, cubeTexture);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
 
