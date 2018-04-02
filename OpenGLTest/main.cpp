@@ -178,7 +178,7 @@ int main(int argc, char** argv) {
 
 	glViewport(0, 0, screenWidth, screenHeight);
 
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_move_callback);//鼠标移动
@@ -186,173 +186,26 @@ int main(int argc, char** argv) {
 	glfwSetKeyCallback(window, key_click_callback);//键盘按下
 	glfwSetScrollCallback(window, scroll_callback);//鼠标滚轮
 
-	float cubeVertices[] = {
-		//位置               法线
-		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-
-		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-		0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-		0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-		0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-
-		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-
-		0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-		0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-		0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-		0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-		0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-		0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-
-		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-		0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-		0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-		0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-
-		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-		0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-		0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-		0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+	float points[] = {
+		-0.5f,  0.5f, 1.0f, 0.0f, 0.0f, // 左上
+		0.5f,  0.5f, 0.0f, 1.0f, 0.0f, // 右上
+		0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // 右下
+		-0.5f, -0.5f, 1.0f, 1.0f, 0.0f  // 左下
 	};
 
-	float skyboxVertices[] = {
-		-1.0f,  1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
-		1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-
-		-1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-
-		1.0f, -1.0f, -1.0f,
-		1.0f, -1.0f,  1.0f,
-		1.0f,  1.0f,  1.0f,
-		1.0f,  1.0f,  1.0f,
-		1.0f,  1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
-
-		-1.0f, -1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		1.0f,  1.0f,  1.0f,
-		1.0f,  1.0f,  1.0f,
-		1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-
-		-1.0f,  1.0f, -1.0f,
-		1.0f,  1.0f, -1.0f,
-		1.0f,  1.0f,  1.0f,
-		1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f, -1.0f,
-
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		1.0f, -1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		1.0f, -1.0f,  1.0f
-	};
-
-	// 立方体 VAO
-	unsigned int cubeVAO, cubeVBO;
-	glGenVertexArrays(1, &cubeVAO);
-	glGenBuffers(1, &cubeVBO);
-	glBindVertexArray(cubeVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), &cubeVertices, GL_STATIC_DRAW);
+	unsigned int pointsVAO, pointsVBO;
+	glGenVertexArrays(1, &pointsVAO);
+	glGenBuffers(1, &pointsVBO);
+	glBindVertexArray(pointsVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, pointsVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(points), &points, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
 	glBindVertexArray(0);
-	//天空盒VAO
-	unsigned int skyboxVAO, skyboxVBO;
-	glGenVertexArrays(1, &skyboxVAO);
-	glGenBuffers(1, &skyboxVBO);
-	glBindVertexArray(skyboxVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
-	// 加载纹理
-	//翻转纹理y坐标
-	unsigned int cubeTexture = loadTexture("resources/marble.jpg");
-	std::vector<std::string> faces
-	{
-		"resources/skybox/right.jpg",
-		"resources/skybox/left.jpg",
-		"resources/skybox/top.jpg",
-		"resources/skybox/bottom.jpg",
-		"resources/skybox/back.jpg",
-		"resources/skybox/front.jpg",
-	};
-	unsigned int skyboxTexture = loadCubeMap(faces);
-
-#pragma region 光源属性准备
-	glm::vec3 dirLightDirection(-0.2f, -1.0f, -0.3f);
-	glm::vec3 pointLightPositions[] = {
-		glm::vec3(0.7f, 0.2f, 2.0f),
-		glm::vec3(2.3f, -3.3f, -4.0f),
-		glm::vec3(-4.0f,  2.0f, -12.0f),
-		glm::vec3(0.0f,  0.0f, -3.0f)
-	};
-#pragma endregion
-
-	Shader shader("shaders/nanosuit.vs", "shaders/nanosuit.fs");
-	Shader skyboxShader("shaders/skybox.vs", "shaders/skybox.fs");
-	Shader cubeShader("shaders/depth_test.vs", "shaders/depth_test.fs");
-
-	Model nanosuit("models/nanosuit_reflection/nanosuit.obj");
-
-	skyboxShader.use();
-	skyboxShader.setInt("skybox", 0);
-	cubeShader.use();
-	cubeShader.setInt("skybox", 0);
-	shader.use();
-	shader.setInt("skybox", 3);
-
-#pragma region 使用UBO
-	//获取Unoform Block 位置索引
-	unsigned int uMatIdxShader = glGetUniformBlockIndex(shader.ID, "Matrices");
-	unsigned int uMatIdxSkyboxShader = glGetUniformBlockIndex(skyboxShader.ID, "Matrices");
-	unsigned int uMatIdxCubeShader = glGetUniformBlockIndex(cubeShader.ID, "Matrices");
-
-	//设置绑定点，例子绑定到0
-	glUniformBlockBinding(shader.ID, uMatIdxShader, 0);
-	glUniformBlockBinding(skyboxShader.ID, uMatIdxSkyboxShader, 0);
-	glUniformBlockBinding(cubeShader.ID, uMatIdxCubeShader, 0);
-
-	//创建UBO，并绑定到点0
-	unsigned int uboMatrices;
-	glGenBuffers(1, &uboMatrices);
-	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-	glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 2 * sizeof(glm::mat4));
-#pragma endregion
+	Shader shader("shaders/geometry.vs", "shaders/geometry.fs", "shaders/geometry.gs");
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -369,94 +222,13 @@ int main(int argc, char** argv) {
 		glm::mat4 view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
 		glm::mat4 projection = glm::perspective(glm::radians(camera.GetFov()), screenWidth / screenHeight, 0.1f, 100.0f);
 
-		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-		glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(view));
-		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(projection));
-		glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		//开始渲染
-		//画模型
 		shader.use();
-		model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f));
-		model = glm::scale(model, glm::vec3(0.2f));
-		shader.setMatrix4fv("model", value_ptr(model));
-		glm::mat3 normalMat;
-		normalMat = glm::transpose(glm::inverse(model));
-		shader.setMatrix3fv("normalMat", glm::value_ptr(normalMat));
-
-		shader.setFloat3("viewPos", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
-		shader.setFloat("material.shininess", 32.0f);
-
-		//平行光
-		shader.setFloat3("dirLight.direction", dirLightDirection.x, dirLightDirection.y, dirLightDirection.z);
-		shader.setFloat3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-		shader.setFloat3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
-		shader.setFloat3("dirLight.specular", 0.5f, 0.5f, 0.5f);
-
-		//点光源
-		for (int i = 0; i < 4; i++) {
-			shader.setFloat3(("pointLights[" + std::to_string(i) + "]" + ".position").c_str(), pointLightPositions[i].x, pointLightPositions[i].y, pointLightPositions[i].z);
-			shader.setFloat3(("pointLights[" + std::to_string(i) + "]" + ".ambient").c_str(), 0.05f, 0.05f, 0.05f);
-			shader.setFloat3(("pointLights[" + std::to_string(i) + "]" + ".diffuse").c_str(), 0.8f, 0.8f, 0.8f);
-			shader.setFloat3(("pointLights[" + std::to_string(i) + "]" + ".specular").c_str(), 1.0f, 1.0f, 1.0f);
-			shader.setFloat(("pointLights[" + std::to_string(i) + "]" + ".constant").c_str(), 1.0f);
-			shader.setFloat(("pointLights[" + std::to_string(i) + "]" + "linear").c_str(), 0.09f);
-			shader.setFloat(("pointLights[" + std::to_string(i) + "]" + "quadratic").c_str(), 0.032f);
-		}
-
-		//聚光灯
-		shader.setFloat3("spotLight.position", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
-		shader.setFloat3("spotLight.direction", camera.GetTarget().x, camera.GetTarget().y, camera.GetTarget().z);
-		shader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
-		shader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
-		shader.setFloat3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
-		shader.setFloat3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
-		shader.setFloat3("spotLight.specular", 1.0f, 1.0f, 1.0f);
-		shader.setFloat("spotLight.constant", 1.0f);
-		shader.setFloat("spotLight.linear", 0.09);
-		shader.setFloat("spotLight.quadratic", 0.032);
-		glActiveTexture(GL_TEXTURE0 + 3);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
-		nanosuit.Draw(shader);
-
-		//画箱子
-		cubeShader.use();
-		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(-2.0f, 0.0f, 0.0f));
-		cubeShader.setMatrix4fv("model", value_ptr(model));
-		cubeShader.setFloat3("cameraPos", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
-		glBindVertexArray(cubeVAO);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glBindVertexArray(0);
-
-		glDepthFunc(GL_LEQUAL);
-		skyboxShader.use();
-		view = glm::mat4(glm::mat3(view));
-		skyboxShader.setMatrix4fv("view", glm::value_ptr(view));
-		skyboxShader.setMatrix4fv("projection", value_ptr(projection));
-		model = glm::mat4();
-		//model = glm::scale(model, glm::vec3(5));
-		skyboxShader.setMatrix4fv("model", value_ptr(model));
-		glBindVertexArray(skyboxVAO);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glBindVertexArray(0);
-		glDepthFunc(GL_LESS);
+		glBindVertexArray(pointsVAO);
+		glDrawArrays(GL_POINTS, 0, 4);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-
-	// 清除操作
-	glDeleteVertexArrays(1, &cubeVAO);
-	glDeleteVertexArrays(1, &skyboxVAO);
-	glDeleteBuffers(1, &cubeVBO);
-	glDeleteBuffers(1, &skyboxVBO);
 
 	glfwTerminate();
 	return 0;
