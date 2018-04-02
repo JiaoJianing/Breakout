@@ -186,7 +186,8 @@ int main(int argc, char** argv) {
 	glfwSetKeyCallback(window, key_click_callback);//键盘按下
 	glfwSetScrollCallback(window, scroll_callback);//鼠标滚轮
 
-	Shader shader("shaders/nanosuit.vs", "shaders/nanosuit.fs", "shaders/nanosuit.gs");
+	Shader shader("shaders/nanosuit.vs", "shaders/nanosuit.fs");
+	Shader normalShader("shaders/nanosuit_normal.vs", "shaders/nanosuit_normal.fs", "shaders/nanosuit_normal.gs");
 
 	Model nanosuit("models/nanosuit/nanosuit.obj");
 
@@ -210,12 +211,20 @@ int main(int argc, char** argv) {
 		glm::mat4 view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
 		glm::mat4 projection = glm::perspective(glm::radians(camera.GetFov()), screenWidth / screenHeight, 0.1f, 100.0f);
 
+		//先正常绘制模型
 		shader.use();
 		shader.setMatrix4("model", model);
 		shader.setMatrix4("view", view);
 		shader.setMatrix4("projection", projection);
-		shader.setFloat("time", currentFrame);
 		nanosuit.Draw(shader);
+
+		//用几何着色器绘制法线
+		normalShader.use();
+		normalShader.setMatrix4("model", model);
+		normalShader.setMatrix4("view", view);
+		normalShader.setMatrix4("projection", projection);
+		nanosuit.Draw(normalShader);
+
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

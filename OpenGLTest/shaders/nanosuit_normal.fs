@@ -10,9 +10,10 @@ out vec4 FragColor;
 
 uniform Material material;
 
-in vec2 texCoord;
+in vec3 normal;
+in vec2 fTexCoord;
 
 void main()
 {
-	FragColor = texture(material.texture_diffuse1, texCoord);
+	FragColor = vec4(1, 1, 0, 1);
 };
