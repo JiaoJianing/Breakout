@@ -163,7 +163,7 @@ int main(int argc, char** argv) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_SAMPLES, 4);
+	//glfwWindowHint(GLFW_SAMPLES, 4);
 
 	GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "OpenGLTest", NULL, NULL);
 	if (window == NULL) {
@@ -182,13 +182,36 @@ int main(int argc, char** argv) {
 
 	glEnable(GL_DEPTH_TEST);
 
-	glEnable(GL_MULTISAMPLE);
+	//glEnable(GL_MULTISAMPLE);
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_move_callback);//鼠标移动
 	glfwSetMouseButtonCallback(window, mouse_click_callback);//鼠标点击
 	glfwSetKeyCallback(window, key_click_callback);//键盘按下
 	glfwSetScrollCallback(window, scroll_callback);//鼠标滚轮
+
+	//全屏矩形数据
+	float quadVertices[] = {
+		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+		1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+		-1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+		-1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+		1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+		1.0f, 1.0f, 0.0f, 1.0f, 1.0f
+	};
+
+	unsigned int fullScreenVAO, fullScreenVBO;
+	glGenVertexArrays(1, &fullScreenVAO);
+	glGenBuffers(1, &fullScreenVBO);
+	glBindVertexArray(fullScreenVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, fullScreenVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glBindBuffer(GL_ARRAY_BUFFER, fullScreenVBO);
+	glBindVertexArray(fullScreenVAO);
 
 	//随机产生大量小行星位置
 	unsigned int amount = 100000;
@@ -254,6 +277,56 @@ int main(int argc, char** argv) {
 
 	Shader planetShader("shaders/planet.vs","shaders/planet.fs");
 	Shader rockShader("shaders/rock.vs", "shaders/planet.fs");
+	Shader fullScreenShader("shaders/full_screen.vs", "shaders/full_screen.fs");
+
+	fullScreenShader.use();
+	fullScreenShader.setInt("texture1", 0);
+
+#pragma region 多重采样帧缓冲
+
+	unsigned int msFBO;
+	glGenFramebuffers(1, &msFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, msFBO);
+	unsigned int msTexture;
+	glGenTextures(1, &msTexture);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, msTexture);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, screenWidth, screenHeight, GL_TRUE);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, msTexture, 0);
+	
+	unsigned int msRBO;
+	glGenRenderbuffers(1, &msRBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, msRBO);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, screenWidth, screenHeight);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, msRBO);
+	
+	//检查帧缓冲完整性
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		std::cout << "FrameBuffer not completed!" << std::endl;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+#pragma endregion
+
+#pragma region 中转帧缓冲
+	unsigned int interFBO;
+	glGenFramebuffers(1, &interFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, interFBO);
+	unsigned int fullscreenTexture;
+	glGenTextures(1, &fullscreenTexture);
+	glBindTexture(GL_TEXTURE_2D, fullscreenTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenWidth, screenHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fullscreenTexture, 0);
+
+	//检查帧缓冲完整性
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		std::cout << "FrameBuffer not completed!" << std::endl;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+#pragma endregion
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -266,8 +339,11 @@ int main(int argc, char** argv) {
 		processInput(window);
 		camera.Render(currentFrame, deltaFrame);
 
+		//渲染到多重采样帧缓冲
+		glBindFramebuffer(GL_FRAMEBUFFER, msFBO);
 		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glEnable(GL_DEPTH_TEST);
 
 		planetShader.use();
 		glm::mat4 model;
@@ -289,6 +365,26 @@ int main(int argc, char** argv) {
 			glBindVertexArray(rock.getMeshes()[i].getVAO());
 			glDrawElementsInstanced(GL_TRIANGLES, rock.getMeshes()[i].indices.size(), GL_UNSIGNED_INT, 0, amount);
 		}
+
+		//将多重采样帧缓冲写入到中转帧缓冲，此时图像存入fullscreenTexture
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, msFBO);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, interFBO);
+		glBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+		//解绑
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		//渲染全屏矩形
+		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		glDisable(GL_DEPTH_TEST);
+
+		fullScreenShader.use();
+		glBindVertexArray(fullScreenVAO);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, fullscreenTexture);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
