@@ -9,7 +9,7 @@
 
 Camera::Camera(float windowWidth, float windowHeight)
 {
-	m_pos = glm::vec3(0, 0, 3);
+	m_pos = glm::vec3(0, 0, 55);
 	m_target = glm::vec3(0, 0, -1);
 	m_up = glm::vec3(0, 1, 0);
 	m_curFrame = 0;
@@ -122,11 +122,9 @@ void Camera::OnMouseDown()
 
 void Camera::OnMouseScroll(double xOffset, double yOffset)
 {
-	if (m_fov >= 1.0f && m_fov <= 45.0f) {
-		m_fov -= yOffset;
-	}
-	if (m_fov <= 1.0f) m_fov = 1.0f;
-	if (m_fov >= 45.0f) m_fov = 45.0f;
+	float cameraSpeed = m_keySensitivity * yOffset * 0.1f;
+
+	m_pos += cameraSpeed * m_target;
 }
 
 const glm::vec3& Camera::GetPos() const

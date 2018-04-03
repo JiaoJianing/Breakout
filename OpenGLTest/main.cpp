@@ -179,7 +179,7 @@ int main(int argc, char** argv) {
 
 	glViewport(0, 0, screenWidth, screenHeight);
 
-	//glEnable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_TEST);
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_move_callback);//鼠标移动
@@ -187,49 +187,40 @@ int main(int argc, char** argv) {
 	glfwSetKeyCallback(window, key_click_callback);//键盘按下
 	glfwSetScrollCallback(window, scroll_callback);//鼠标滚轮
 
-	float quadVertices[] = {
-		// 位置          // 颜色
-		-0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
-		-0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
-		0.05f, -0.05f,  0.0f, 0.0f, 1.0f,
+	//随机产生大量小行星位置
+	unsigned int amount = 1000;
+	glm::mat4* modelMatrices;
+	modelMatrices = new glm::mat4[amount];
+	srand(glfwGetTime());//初始化随机数种子
+	float radius = 50.0;
+	float offset = 2.5f;
+	for (unsigned int i = 0; i < amount; i++) {
+		glm::mat4 model;
+		//位移 分布在半径为radius的圆形上 偏移范围[-offset, offset]
+		float angle = (float)i / (float)amount * 360.0f;
+		float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+		float x = sin(angle) * radius + displacement;
+		displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+		float y = displacement * 0.4f;//y方向变化小一些
+		displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+		float z = cos(angle) * radius + displacement;
+		model = glm::translate(model, glm::vec3(x, y, z));
 
-		0.05f,  -0.05f,  1.0f, 0.0f, 0.0f,
-		0.05f, 0.05f,  0.0f, 1.0f, 0.0f,
-		-0.05f,  0.05f,  0.0f, 1.0f, 1.0f
-	};
+		//旋转
+		float rotAngle = (rand() % 360);
+		model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
 
-	Shader shader("shaders/instancing.vs", "shaders/instancing.fs");
+		//缩放 [0.05, 0.25]
+		float scale = (rand() % 20) / 100.0f + 0.05;
+		model = glm::scale(model, glm::vec3(scale));
 
-	glm::vec2 translations[100];
-	int index = 0;
-	float offset = 0.1f;
-	for (int y = -10; y < 10; y += 2) {
-		for (int x = -10; x < 10; x += 2) {
-			glm::vec2 translation;
-			translation.x = (float)x / 10.0f + offset;
-			translation.y = (float)y / 10.0f + offset;
-			translations[index++] = translation;
-		}
+		modelMatrices[i] = model;
 	}
 
-	unsigned int VAO, VBO, instanceVBO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &instanceVBO);
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
-	//实例化数组
-	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 100, &translations[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (void*)0);
-	glVertexAttribDivisor(2, 1);//这行代码告诉OpenGL，处于位置2的顶点属性是一个实例化数组
-	glBindVertexArray(0);
+	Model planet("models/planet/planet.obj");
+	Model rock("models/rock/rock.obj");
+
+	Shader shader("shaders/planet.vs","shaders/planet.fs");
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -243,13 +234,25 @@ int main(int argc, char** argv) {
 		camera.Render(currentFrame, deltaFrame);
 
 		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		shader.use();
-		glBindVertexArray(VAO);
-		glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 100);
-		glBindVertexArray(0);
+		glm::mat4 model;
+		model = glm::translate(model, glm::vec3(0.0f, -3.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(4.0f));
+		glm::mat4 view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
+		glm::mat4 projection = glm::perspective(camera.GetFov(), screenWidth / screenHeight, 0.1f, 1000.0f);
 
+		shader.setMatrix4("model", model);
+		shader.setMatrix4("view", view);
+		shader.setMatrix4("projection", projection);
+		
+		planet.Draw(shader);
+
+		for (unsigned int i = 0; i < amount; i++) {
+			shader.setMatrix4("model", modelMatrices[i]);
+			rock.Draw(shader);
+		}
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
