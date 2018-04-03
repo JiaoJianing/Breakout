@@ -6,6 +6,7 @@
 #include <gtc/quaternion.hpp>
 #include <gtx/quaternion.hpp>
 #include <iostream>
+#include <sstream>
 #include <map>
 #include <string>
 #include "Shader.h"
@@ -178,7 +179,7 @@ int main(int argc, char** argv) {
 
 	glViewport(0, 0, screenWidth, screenHeight);
 
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_move_callback);//鼠标移动
@@ -186,10 +187,51 @@ int main(int argc, char** argv) {
 	glfwSetKeyCallback(window, key_click_callback);//键盘按下
 	glfwSetScrollCallback(window, scroll_callback);//鼠标滚轮
 
-	Shader shader("shaders/nanosuit.vs", "shaders/nanosuit.fs");
-	Shader normalShader("shaders/nanosuit_normal.vs", "shaders/nanosuit_normal.fs", "shaders/nanosuit_normal.gs");
+	float quadVertices[] = {
+		// 位置          // 颜色
+		-0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
+		-0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
+		0.05f, -0.05f,  0.0f, 0.0f, 1.0f,
 
-	Model nanosuit("models/nanosuit/nanosuit.obj");
+		0.05f,  -0.05f,  1.0f, 0.0f, 0.0f,
+		0.05f, 0.05f,  0.0f, 1.0f, 0.0f,
+		-0.05f,  0.05f,  0.0f, 1.0f, 1.0f
+	};
+
+	unsigned int VAO, VBO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
+	glBindVertexArray(0);
+
+	Shader shader("shaders/instancing.vs", "shaders/instancing.fs");
+
+	glm::vec2 translations[100];
+	int index = 0;
+	float offset = 0.1f;
+	for (int y = -10; y < 10; y += 2) {
+		for (int x = -10; x < 10; x += 2) {
+			glm::vec2 translation;
+			translation.x = (float)x / 10.0f + offset;
+			translation.y = (float)y / 10.0f + offset;
+			translations[index++] = translation;
+		}
+	}
+
+	shader.use();
+	for (unsigned int i = 0; i < 100; i++) {
+		std::stringstream ss;
+		std::string index;
+		ss << i;
+		index = ss.str();
+		shader.setVec2(("offsets[" + index + "]").c_str(), translations[i]);
+	}
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -203,27 +245,12 @@ int main(int argc, char** argv) {
 		camera.Render(currentFrame, deltaFrame);
 
 		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT);
 
-		glm::mat4 model;
-		model = glm::translate(model, glm::vec3(0.0, -1.75, 0.0));
-		model = glm::scale(model, glm::vec3(0.2f));
-		glm::mat4 view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
-		glm::mat4 projection = glm::perspective(glm::radians(camera.GetFov()), screenWidth / screenHeight, 0.1f, 100.0f);
-
-		//先正常绘制模型
 		shader.use();
-		shader.setMatrix4("model", model);
-		shader.setMatrix4("view", view);
-		shader.setMatrix4("projection", projection);
-		nanosuit.Draw(shader);
-
-		//用几何着色器绘制法线
-		normalShader.use();
-		normalShader.setMatrix4("model", model);
-		normalShader.setMatrix4("view", view);
-		normalShader.setMatrix4("projection", projection);
-		nanosuit.Draw(normalShader);
+		glBindVertexArray(VAO);
+		glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 100);
+		glBindVertexArray(0);
 
 
 		glfwSwapBuffers(window);
