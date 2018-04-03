@@ -20,6 +20,11 @@ void Model::Draw(Shader shader)
 	}
 }
 
+std::vector<Mesh>& Model::getMeshes()
+{
+	return meshes;
+}
+
 void Model::loadModel(std::string path)
 {
 	Assimp::Importer import;

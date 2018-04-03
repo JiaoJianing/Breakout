@@ -18,6 +18,8 @@ public:
 
 	void Draw(Shader shader);
 
+	unsigned int getVAO();
+
 private:
 	unsigned int VAO, VBO, EBO;
 	void setupMesh();

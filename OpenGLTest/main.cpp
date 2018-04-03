@@ -188,12 +188,12 @@ int main(int argc, char** argv) {
 	glfwSetScrollCallback(window, scroll_callback);//鼠标滚轮
 
 	//随机产生大量小行星位置
-	unsigned int amount = 1000;
+	unsigned int amount = 100000;
 	glm::mat4* modelMatrices;
 	modelMatrices = new glm::mat4[amount];
 	srand(glfwGetTime());//初始化随机数种子
-	float radius = 50.0;
-	float offset = 2.5f;
+	float radius = 150.0;
+	float offset = 25.0f;
 	for (unsigned int i = 0; i < amount; i++) {
 		glm::mat4 model;
 		//位移 分布在半径为radius的圆形上 偏移范围[-offset, offset]
@@ -220,7 +220,37 @@ int main(int argc, char** argv) {
 	Model planet("models/planet/planet.obj");
 	Model rock("models/rock/rock.obj");
 
-	Shader shader("shaders/planet.vs","shaders/planet.fs");
+	unsigned int instanceVBO;
+	glGenBuffers(1, &instanceVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+	glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
+
+	for (unsigned int i = 0; i < rock.getMeshes().size(); i++) {
+		unsigned int VAO = rock.getMeshes()[i].getVAO();
+		glBindVertexArray(VAO);
+		//填充实例化矩阵 顶点属性
+		GLsizei vec4Size = sizeof(glm::vec4);
+		
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)vec4Size);
+		glEnableVertexAttribArray(5);
+		glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
+		glEnableVertexAttribArray(6);
+		glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
+
+		glVertexAttribDivisor(3, 1);
+		glVertexAttribDivisor(4, 1);
+		glVertexAttribDivisor(5, 1);
+		glVertexAttribDivisor(6, 1);
+
+		glBindVertexArray(0);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	Shader planetShader("shaders/planet.vs","shaders/planet.fs");
+	Shader rockShader("shaders/rock.vs", "shaders/planet.fs");
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -236,22 +266,25 @@ int main(int argc, char** argv) {
 		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		shader.use();
+		planetShader.use();
 		glm::mat4 model;
 		model = glm::translate(model, glm::vec3(0.0f, -3.0f, 0.0f));
 		model = glm::scale(model, glm::vec3(4.0f));
 		glm::mat4 view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
 		glm::mat4 projection = glm::perspective(camera.GetFov(), screenWidth / screenHeight, 0.1f, 1000.0f);
 
-		shader.setMatrix4("model", model);
-		shader.setMatrix4("view", view);
-		shader.setMatrix4("projection", projection);
+		planetShader.setMatrix4("model", model);
+		planetShader.setMatrix4("view", view);
+		planetShader.setMatrix4("projection", projection);
 		
-		planet.Draw(shader);
+		planet.Draw(planetShader);
 
-		for (unsigned int i = 0; i < amount; i++) {
-			shader.setMatrix4("model", modelMatrices[i]);
-			rock.Draw(shader);
+		rockShader.use();
+		rockShader.setMatrix4("view", view);
+		rockShader.setMatrix4("projection", projection);
+		for (unsigned int i = 0; i < rock.getMeshes().size(); i++) {
+			glBindVertexArray(rock.getMeshes()[i].getVAO());
+			glDrawElementsInstanced(GL_TRIANGLES, rock.getMeshes()[i].indices.size(), GL_UNSIGNED_INT, 0, amount);
 		}
 
 		glfwSwapBuffers(window);

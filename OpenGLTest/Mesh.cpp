@@ -47,6 +47,11 @@ void Mesh::Draw(Shader shader)
 	glBindVertexArray(0);
 }
 
+unsigned int Mesh::getVAO()
+{
+	return VAO;
+}
+
 void Mesh::setupMesh()
 {
 	glGenVertexArrays(1, &VAO);
