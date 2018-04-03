@@ -198,18 +198,6 @@ int main(int argc, char** argv) {
 		-0.05f,  0.05f,  0.0f, 1.0f, 1.0f
 	};
 
-	unsigned int VAO, VBO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
-	glBindVertexArray(0);
-
 	Shader shader("shaders/instancing.vs", "shaders/instancing.fs");
 
 	glm::vec2 translations[100];
@@ -224,14 +212,24 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	shader.use();
-	for (unsigned int i = 0; i < 100; i++) {
-		std::stringstream ss;
-		std::string index;
-		ss << i;
-		index = ss.str();
-		shader.setVec2(("offsets[" + index + "]").c_str(), translations[i]);
-	}
+	unsigned int VAO, VBO, instanceVBO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &instanceVBO);
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
+	//实例化数组
+	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 100, &translations[0], GL_STATIC_DRAW);
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (void*)0);
+	glVertexAttribDivisor(2, 1);//这行代码告诉OpenGL，处于位置2的顶点属性是一个实例化数组
+	glBindVertexArray(0);
 
 	while (!glfwWindowShouldClose(window))
 	{
