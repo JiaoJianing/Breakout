@@ -163,6 +163,7 @@ int main(int argc, char** argv) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_SAMPLES, 4);
 
 	GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "OpenGLTest", NULL, NULL);
 	if (window == NULL) {
@@ -180,6 +181,8 @@ int main(int argc, char** argv) {
 	glViewport(0, 0, screenWidth, screenHeight);
 
 	glEnable(GL_DEPTH_TEST);
+
+	glEnable(GL_MULTISAMPLE);
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_move_callback);// Û±Í“∆∂Ø
