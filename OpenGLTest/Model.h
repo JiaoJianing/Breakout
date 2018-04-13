@@ -10,8 +10,11 @@
 class Model
 {
 public:
+	Model();
 	Model(const char* path);
 	~Model();
+
+	void LoadModel(const char* path);
 
 	void Draw(Shader shader);
 

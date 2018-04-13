@@ -147,7 +147,7 @@ const float Camera::GetFov() const
 	return m_fov;
 }
 
-void Camera::Render(float curFrame, float deltaFrame)
+void Camera::Update(float curFrame, float deltaFrame)
 {
 	m_curFrame = curFrame;
 	m_deltaFrame = deltaFrame;

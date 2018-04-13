@@ -13,7 +13,7 @@ public:
 	const glm::vec3&  GetUp() const;
 	const float GetFov() const;
 
-	void Render(float curFrame, float deltaFrame);	
+	void Update(float curFrame, float deltaFrame);	
 	
 	void OnKeyboard(int key);
 	void OnMouseMove(double x, double y);

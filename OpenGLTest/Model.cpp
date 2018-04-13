@@ -9,8 +9,18 @@ Model::Model(const char* path)
 	loadModel(path);
 }
 
+Model::Model()
+{
+
+}
+
 Model::~Model()
 {
+}
+
+void Model::LoadModel(const char* path)
+{
+	loadModel(path);
 }
 
 void Model::Draw(Shader shader)
