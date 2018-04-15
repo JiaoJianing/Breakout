@@ -24,6 +24,7 @@ bool blinn = true;
 Camera camera(screenWidth, screenHeight);
 Model nanosuit;
 
+glm::vec3 lightSrcPos(0.0f, 4.0f, -4.0f);
 glm::vec3 lightPos(0.0f, 4.0f, -4.0f);
 float lightRotAngle = 0;
 float modelRotAngle = 0;
@@ -188,7 +189,7 @@ void RenderScene(Shader shader, float currentFrame) {
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
-	modelRotAngle += currentFrame * 0.05;
+	modelRotAngle += deltaFrame * 50;
 	if (modelRotAngle >= 360) modelRotAngle = 0;
 	model = glm::mat4();
 	model = glm::translate(model, glm::vec3(-2.0f, 0.0f, 0.0f));
@@ -400,14 +401,18 @@ int main(int argc, char** argv) {
 		deltaFrame = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
+		//计算帧率
+		float frameRate = 1 / deltaFrame;
+		std::cout << "Current FPS: " << frameRate << std::endl;
+
 		processInput(window);
 		camera.Update(currentFrame, deltaFrame);
 
-		lightRotAngle += deltaFrame * 0.05;
+		lightRotAngle += deltaFrame * 50;
 		if (lightRotAngle >= 360) lightRotAngle = 0;
 		glm::mat4 lightRotMat;
 		lightRotMat = glm::rotate(lightRotMat, glm::radians(lightRotAngle), glm::vec3(0.0f, 1.0f, 0.0f));
-		lightPos = lightRotMat * glm::vec4(lightPos, 1.0);
+		lightPos = lightRotMat * glm::vec4(lightSrcPos, 1.0);
 
 		//渲染深度贴图
 		glViewport(0, 0, shadowWidth, shadowHeight);
