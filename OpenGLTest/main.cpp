@@ -354,8 +354,8 @@ int main(int argc, char** argv) {
 	unsigned int windowTexture = loadTexture("resources/blending_transparent_window.png");
 	unsigned int grassTexture = loadTexture("resources/grass.png");
 
-	Shader shader("shaders/depth_test.vs", "shaders/depth_test.fs");
-	Shader fullscreenShader("shaders/full_screen.vs", "shaders/full_screen.fs");
+	Shader shader("shaders/frame_buffer/depth_test.vs", "shaders/frame_buffer/depth_test.fs");
+	Shader fullscreenShader("shaders/frame_buffer/full_screen.vs", "shaders/frame_buffer/full_screen.fs");
 
 	fullscreenShader.use();
 	fullscreenShader.setInt("texture1", 0);
