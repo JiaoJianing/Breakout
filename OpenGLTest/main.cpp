@@ -298,7 +298,7 @@ int main(int argc, char** argv) {
 	unsigned int windowTexture = loadTexture("resources/blending_transparent_window.png");
 	unsigned int grassTexture = loadTexture("resources/grass.png");
 
-	Shader shader("shaders/depth_test.vs", "shaders/depth_test.fs");
+	Shader shader("shaders/alpha_blend/depth_test.vs", "shaders/alpha_blend/depth_test.fs");
 
 	shader.use();
 	shader.setInt("texture1", 0);
