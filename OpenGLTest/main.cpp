@@ -249,8 +249,8 @@ int main(int argc, char** argv) {
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	Shader planetShader("shaders/planet.vs","shaders/planet.fs");
-	Shader rockShader("shaders/rock.vs", "shaders/planet.fs");
+	Shader planetShader("shaders/instancing/planet.vs","shaders/instancing/planet.fs");
+	Shader rockShader("shaders/instancing/rock.vs", "shaders/instancing/planet.fs");
 
 	while (!glfwWindowShouldClose(window))
 	{
