@@ -13,6 +13,7 @@
 #include "stb_image.h"
 #include "Camera.h"
 #include "Model.h"
+#include "Cube.h"
 
 float screenWidth = 800, screenHeight = 600;
 
@@ -22,7 +23,9 @@ bool blinn = true;
 
 Camera camera(screenWidth, screenHeight);
 
-glm::vec3 lightPos(0.5f, 1.0f, 0.3f);
+glm::vec3 lightPos(2.0f, 1.0f, 2.0f);
+glm::vec3 lightSrcPos(2.0f, 1.0f, 2.0f);
+float lightRotAngle = 0;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	screenWidth = width;
@@ -169,6 +172,19 @@ unsigned int loadCubeMap(std::vector<std::string> faces) {
 	return textureID;
 }
 
+void calculateBiTangent(glm::vec3 edge1, glm::vec3 edge2, glm::vec2 deltaUV1, glm::vec2 deltaUV2, glm::vec3& tangent, glm::vec3& bitangent) {
+	float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+	tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+	tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+	tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+	tangent = glm::normalize(tangent);
+
+	bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+	bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+	bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+	bitangent = glm::normalize(bitangent);
+}
+
 int main(int argc, char** argv) {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -199,15 +215,53 @@ int main(int argc, char** argv) {
 	glfwSetKeyCallback(window, key_click_callback);//键盘按下
 	glfwSetScrollCallback(window, scroll_callback);//鼠标滚轮
 
-	//四边形点数据
-	float quadVertices[] = {
-		-1.0, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-		-1.0, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-		1.0, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-		-1.0, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-		1.0, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-		1.0, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-	};
+	//四边形数据
+	std::vector<glm::vec3> positions;
+	std::vector<glm::vec3> normals;
+	std::vector<glm::vec2> uvs;
+	std::vector<glm::vec3> tangents;
+	std::vector<glm::vec3> biTangents;
+
+	//position
+	glm::vec3 pos1(-1.0f, 1.0f, 0.0f);
+	glm::vec3 pos2(-1.0f, -1.0f, 0.0f);
+	glm::vec3 pos3(1.0f, -1.0f, 0.0f);
+	glm::vec3 pos4(1.0f, 1.0f, 0.0f);
+	//uv
+	glm::vec2 uv1(0.0f, 1.0f);
+	glm::vec2 uv2(0.0f, 0.0f);
+	glm::vec2 uv3(1.0f, 0.0f);
+	glm::vec2 uv4(1.0f, 1.0f);
+	//normal
+	glm::vec3 nm(0.0f, 0.0f, 1.0f);
+	//计算切线和负切线
+	glm::vec3 tangent1, bitangent1, tangent2, bitangent2;
+	//first triangle
+	calculateBiTangent(pos2 - pos1, pos3 - pos1, uv2 - uv1, uv3 - uv1, tangent1, bitangent1);
+	//second triangle
+	calculateBiTangent(pos3 - pos1, pos4 - pos1, uv3 - uv1, uv4 - uv1, tangent2, bitangent2);
+
+	//组织顶点数据
+	positions.push_back(pos1);positions.push_back(pos2);positions.push_back(pos3);
+	positions.push_back(pos1);positions.push_back(pos3);positions.push_back(pos4);
+
+	normals.push_back(nm);normals.push_back(nm);normals.push_back(nm);
+	normals.push_back(nm);normals.push_back(nm);normals.push_back(nm);
+
+	uvs.push_back(uv1); uvs.push_back(uv2); uvs.push_back(uv3);
+	uvs.push_back(uv1); uvs.push_back(uv3); uvs.push_back(uv4);
+
+	tangents.push_back(tangent1); tangents.push_back(tangent1); tangents.push_back(tangent1);
+	tangents.push_back(tangent2); tangents.push_back(tangent2); tangents.push_back(tangent2);
+
+	biTangents.push_back(bitangent1); biTangents.push_back(bitangent1); biTangents.push_back(bitangent1);
+	biTangents.push_back(bitangent2); biTangents.push_back(bitangent2); biTangents.push_back(bitangent2);
+
+	unsigned int positionsSize = positions.size() * sizeof(glm::vec3);
+	unsigned int normalsSize = normals.size() * sizeof(glm::vec3);
+	unsigned int uvsSize = uvs.size() * sizeof(glm::vec2);
+	unsigned int tangentsSize = tangents.size() * sizeof(glm::vec3);
+	unsigned int biTangentsSize = biTangents.size() * sizeof(glm::vec3);
 
 	//准备四边形顶点缓冲数组
 	unsigned int quadVAO, quadVBO;
@@ -215,13 +269,22 @@ int main(int argc, char** argv) {
 	glGenBuffers(1, &quadVBO);
 	glBindVertexArray(quadVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, positionsSize + normalsSize + uvsSize + tangentsSize + biTangentsSize, NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, positionsSize, &positions[0]);
+	glBufferSubData(GL_ARRAY_BUFFER, positionsSize, normalsSize, &normals[0]);
+	glBufferSubData(GL_ARRAY_BUFFER, positionsSize + normalsSize, uvsSize, &uvs[0]);
+	glBufferSubData(GL_ARRAY_BUFFER, positionsSize + normalsSize + uvsSize, tangentsSize, &tangents[0]);
+	glBufferSubData(GL_ARRAY_BUFFER, positionsSize + normalsSize + uvsSize + tangentsSize, biTangentsSize, &biTangents[0]);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)(positionsSize));
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (void*)(positionsSize + normalsSize));
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)(positionsSize + normalsSize + uvsSize));
+	glEnableVertexAttribArray(4);
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)(positionsSize + normalsSize + uvsSize + tangentsSize));
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
@@ -229,11 +292,14 @@ int main(int argc, char** argv) {
 	wallTexture = loadTexture("resources/brickwall.jpg");
 	wallNormalTexture = loadTexture("resources/brickwall_normal.jpg");
 
-	Shader shader("shaders/normal_texture/blinn_phong.vs", "shaders/normal_texture/blinn_phong.fs");
+	Shader shader("shaders/normal_texture/blinn_phong_tangentspace.vs", "shaders/normal_texture/blinn_phong_tangentspace.fs");
+	Shader cubeShader("shaders/normal_texture/light.vs", "shaders/normal_texture/light.fs");
 
 	shader.use();
 	shader.setInt("texture_diffuse", 0);
 	shader.setInt("texture_normal", 1);
+
+	Cube cube;
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -252,6 +318,11 @@ int main(int argc, char** argv) {
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		lightRotAngle += deltaFrame * 10;
+		if (lightRotAngle >= 360) lightRotAngle = 0;
+		glm::mat4 rotMat = glm::rotate(glm::mat4(), glm::radians(lightRotAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+		//lightPos = glm::vec3(rotMat * glm::vec4(lightSrcPos, 1.0f));
 
 		glm::mat4 model;
 		//model = glm::rotate(model, glm::radians(-60.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -273,6 +344,12 @@ int main(int argc, char** argv) {
 		glBindTexture(GL_TEXTURE_2D, wallNormalTexture);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
+
+		cubeShader.use();
+		cubeShader.setMatrix4("view", view);
+		cubeShader.setMatrix4("projection", projection);
+		cube.SetPos(lightPos);
+		cube.Draw(cubeShader);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
