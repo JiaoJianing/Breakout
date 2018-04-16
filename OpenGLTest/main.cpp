@@ -241,8 +241,8 @@ int main(int argc, char** argv) {
 	unsigned int cubeTexture = loadTexture("resources/marble.jpg");
 	unsigned int floorTexture = loadTexture("resources/metal.png");
 
-	Shader shader("shaders/depth_test.vs", "shaders/depth_test.fs");
-	Shader outline("shaders/depth_test.vs", "shaders/outline.fs");
+	Shader shader("shaders/stencil_test/depth_test.vs", "shaders/stencil_test/depth_test.fs");
+	Shader outline("shaders/stencil_test/depth_test.vs", "shaders/stencil_test/outline.fs");
 
 	shader.use();
 	shader.setInt("texture1", 0);
