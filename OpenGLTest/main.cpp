@@ -225,7 +225,7 @@ int main(int argc, char** argv) {
 
 	unsigned int floorTexture = loadTexture("resources/wood.png");
 
-	Shader blinnShader("shaders/blinn_phong.vs","shaders/blinn_phong.fs");
+	Shader blinnShader("shaders/blinn_phong/blinn_phong.vs","shaders/blinn_phong/blinn_phong.fs");
 
 	blinnShader.use();
 	blinnShader.setInt("texture1", 0);
