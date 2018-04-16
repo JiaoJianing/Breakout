@@ -312,8 +312,8 @@ int main(int argc, char** argv) {
 	};
 	unsigned int skyboxTexture = loadCubeMap(faces);
 
-	Shader shader("shaders/depth_test.vs", "shaders/depth_test.fs");
-	Shader skyboxShader("shaders/skybox.vs", "shaders/skybox.fs");
+	Shader shader("shaders/skybox/depth_test.vs", "shaders/skybox/depth_test.fs");
+	Shader skyboxShader("shaders/skybox/skybox.vs", "shaders/skybox/skybox.fs");
 
 	shader.use();
 	shader.setInt("texture1", 0);
