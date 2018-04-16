@@ -275,9 +275,9 @@ int main(int argc, char** argv) {
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	Shader planetShader("shaders/planet.vs","shaders/planet.fs");
-	Shader rockShader("shaders/rock.vs", "shaders/planet.fs");
-	Shader fullScreenShader("shaders/full_screen.vs", "shaders/full_screen.fs");
+	Shader planetShader("shaders/multi_sampler_anti_aliasing/planet.vs","shaders/multi_sampler_anti_aliasing/planet.fs");
+	Shader rockShader("shaders/multi_sampler_anti_aliasing/rock.vs", "shaders/multi_sampler_anti_aliasing/planet.fs");
+	Shader fullScreenShader("shaders/multi_sampler_anti_aliasing/full_screen.vs", "shaders/multi_sampler_anti_aliasing/full_screen.fs");
 
 	fullScreenShader.use();
 	fullScreenShader.setInt("texture1", 0);
