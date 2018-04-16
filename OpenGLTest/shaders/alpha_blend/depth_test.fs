@@ -1,23 +1,30 @@
 #version 330 core
 out vec4 FragColor;
 
-uniform samplerCube skybox;
-uniform vec3 cameraPos;
+uniform sampler2D texture1;
 
-in vec3 Position;
-in vec3 Normal;
+in vec2 texCoord;
 
+float near = 0.1;
+float far = 100.0;
+
+//将非线性z值转换为线性的
+float linearizeDepth(float depth){
+	float z = depth * 2.0 - 1.0; //转换到-1~1
+	return (2.0 * near * far) /(far + near - z * (far - near));
+} 
 void main()
 {
-	//反射
-	vec3 I = normalize(Position - cameraPos);
-	vec3 R = reflect(I, Normal);
-	
-	//折射
-	//折射率 空气==>玻璃 空气折射率/玻璃折射率
-	float refractRatio = 1.0f / 1.52f;
-	R = refract(I, Normal, refractRatio);
+	vec4 texColor = texture(texture1, texCoord);
+	if (texColor.a < 0.01){
+		discard;
+	}
+	FragColor = texColor;
 
-	//结果
-	FragColor = texture(skybox, R);
+	//输出深度缓冲中的z值(默认：非线性,由于经过了投影变换的处理)
+	//FragColor = vec4(vec3(gl_FragCoord.z), 1.0);
+
+	//输出线性z
+	//float depth = linearizeDepth(gl_FragCoord.z) / far;
+	//FragColor = vec4(vec3(depth), 1.0);
 };
