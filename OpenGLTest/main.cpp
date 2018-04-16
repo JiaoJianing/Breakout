@@ -344,9 +344,9 @@ int main(int argc, char** argv) {
 
 	cubeTexture = loadTexture("resources/wood.png");
 
-	Shader lightShader("shaders/light.vs", "shaders/light.fs");
-	Shader pointShadowShader("shaders/point_shadow.vs","shaders/point_shadow.fs");
-	Shader depthShader("shaders/depth.vs", "shaders/depth.fs", "shaders/depth.gs");
+	Shader lightShader("shaders/shadow/light.vs", "shaders/shadow/light.fs");
+	Shader pointShadowShader("shaders/shadow/point_shadow.vs","shaders/shadow/point_shadow.fs");
+	Shader depthShader("shaders/shadow/depth.vs", "shaders/shadow/depth.fs", "shaders/shadow/depth.gs");
 
 	pointShadowShader.use();
 	pointShadowShader.setInt("material.texture_diffuse1", 0);
