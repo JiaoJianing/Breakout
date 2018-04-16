@@ -321,9 +321,9 @@ int main(int argc, char** argv) {
 	};
 #pragma endregion
 
-	Shader shader("shaders/environment_map/nanosuit.vs", "shaders/environment_map/nanosuit.fs");
-	Shader skyboxShader("shaders/environment_map/skybox.vs", "shaders/environment_map/skybox.fs");
-	Shader cubeShader("shaders/environment_map/depth_test.vs", "shaders/environment_map/depth_test.fs");
+	Shader shader("shaders/ubo/nanosuit.vs", "shaders/ubo/nanosuit.fs");
+	Shader skyboxShader("shaders/ubo/skybox.vs", "shaders/ubo/skybox.fs");
+	Shader cubeShader("shaders/ubo/depth_test.vs", "shaders/ubo/depth_test.fs");
 
 	Model nanosuit("models/nanosuit_reflection/nanosuit.obj");
 
