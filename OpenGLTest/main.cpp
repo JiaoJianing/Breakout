@@ -135,7 +135,7 @@ int main(int argc, char** argv) {
 	std::string path = "models/nanosuit/nanosuit.obj";
 	Model nanosuit(path.c_str());
 
-	Shader modelShader("shaders/nanosuit.vs", "shaders/nanosuit.fs");
+	Shader modelShader("shaders/model/nanosuit.vs", "shaders/model/nanosuit.fs");
 
 	while (!glfwWindowShouldClose(window))
 	{
