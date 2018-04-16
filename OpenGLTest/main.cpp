@@ -186,8 +186,8 @@ int main(int argc, char** argv) {
 	glfwSetKeyCallback(window, key_click_callback);//¼üÅÌ°´ÏÂ
 	glfwSetScrollCallback(window, scroll_callback);//Êó±ê¹öÂÖ
 
-	Shader shader("shaders/nanosuit.vs", "shaders/nanosuit.fs");
-	Shader normalShader("shaders/nanosuit_normal.vs", "shaders/nanosuit_normal.fs", "shaders/nanosuit_normal.gs");
+	Shader shader("shaders/geometry_shader/nanosuit.vs", "shaders/geometry_shader/nanosuit.fs");
+	Shader normalShader("shaders/geometry_shader/nanosuit_normal.vs", "shaders/geometry_shader/nanosuit_normal.fs", "shaders/geometry_shader/nanosuit_normal.gs");
 
 	Model nanosuit("models/nanosuit/nanosuit.obj");
 

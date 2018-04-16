@@ -3,7 +3,6 @@
 struct Material{
 	sampler2D texture_diffuse1;
 	sampler2D texture_specular1;
-	sampler2D texture_reflect1;
 	float shininess;
 };
 
@@ -51,7 +50,6 @@ uniform SpotLight spotLight;
 out vec4 FragColor;
 
 uniform vec3 viewPos;
-uniform samplerCube skybox;
 uniform Material material;
 
 in vec3 normal;
@@ -78,19 +76,8 @@ void main()
 	}
 	//第三阶段 聚光
 	result += calcSpotLight(spotLight, norm, fragPos, viewDir);
-
-	//计算反射
-	vec3 I = normalize(fragPos - viewPos);
-	vec3 R = reflect(I, normalize(normal));
-	result += (texture(skybox, R) * texture(material.texture_reflect1, texCoord)).rgb;
-
-	//计算折射
-	//折射率 空气==>玻璃 空气折射率/玻璃折射率
-	float refractRatio = 1.0f / 1.52f;
-	R = refract(I, normalize(normal), refractRatio);
 	
 	FragColor = vec4(result, 1.0);
-	//FragColor = texture(skybox, R);
 };
 
 vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir){
