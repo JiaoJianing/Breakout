@@ -249,8 +249,8 @@ int main(int argc, char** argv) {
 	unsigned int specularTex = loadTexture("resources/container2_specular.png");
 
 	//使用着色器类
-	Shader objShader("shaders/shader.vs", "shaders/shader.fs");
-	Shader lightShader("shaders/light.vs", "shaders/light.fs");
+	Shader objShader("shaders/light/shader.vs", "shaders/light/shader.fs");
+	Shader lightShader("shaders/light/light.vs", "shaders/light/light.fs");
 
 	//查询最多支持多少顶点属性
 	int nrAttributes;
