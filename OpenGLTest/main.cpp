@@ -23,7 +23,7 @@ bool blinn = true;
 
 Camera camera(screenWidth, screenHeight);
 
-glm::vec3 lightPos(2.0f, 1.0f, 2.0f);
+glm::vec3 lightPos(1.0f, 1.0f, 3.0f);
 glm::vec3 lightSrcPos(2.0f, 1.0f, 2.0f);
 float lightRotAngle = 0;
 
@@ -288,21 +288,28 @@ int main(int argc, char** argv) {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
-	unsigned int wallTexture, wallNormalTexture, wallSpecularTexture;
-	wallTexture = loadTexture("resources/brickwall.jpg");
-	wallNormalTexture = loadTexture("resources/brickwall_normal.jpg");
-	wallSpecularTexture = loadTexture("resources/brickwall_specular.jpg");
+	unsigned int wallTexture, wallNormalTexture, wallSpecularTexture, wallParallaxTexture;
+	wallTexture = loadTexture("resources/bricks2.jpg");
+	wallNormalTexture = loadTexture("resources/bricks2_normal.jpg");
+	wallSpecularTexture = loadTexture("resources/bricks2_specular.jpg");
+	wallParallaxTexture = loadTexture("resources/bricks2_disp.jpg");
 
-	Shader shader("shaders/normal_texture/blinn_phong_tangentspace.vs", "shaders/normal_texture/blinn_phong_tangentspace.fs");
+	unsigned int toyboxTexture, toyboxNormalTexture, toyboxSpecularTexture, toyboxParallaxTexture;
+	toyboxTexture = loadTexture("resources/toy_box_diffuse.png");
+	toyboxNormalTexture = loadTexture("resources/toy_box_normal.png");
+	toyboxSpecularTexture = loadTexture("resources/toy_box_specular.png");
+	toyboxParallaxTexture = loadTexture("resources/toy_box_disp.png");
+
+	Shader shader("shaders/parallax_texture/blinn_phong_tangentspace.vs", "shaders/parallax_texture/blinn_phong_tangentspace.fs");
 	Shader cubeShader("shaders/normal_texture/light.vs", "shaders/normal_texture/light.fs");
 
 	shader.use();
 	shader.setInt("material.texture_diffuse1", 0);
 	shader.setInt("material.texture_specular1", 1);
 	shader.setInt("material.texture_normal1", 2);
+	shader.setInt("material.texture_parallax1", 3);
 
 	Cube cube;
-	Model cyborg("models/cyborg/cyborg.obj");
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -347,14 +354,25 @@ int main(int argc, char** argv) {
 		glBindTexture(GL_TEXTURE_2D, wallSpecularTexture);
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, wallNormalTexture);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, wallParallaxTexture);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
 
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f));
-		model = glm::scale(model, glm::vec3(0.2f));
+		model = glm::translate(model, glm::vec3(0.0f, 3.0f, 0.0f));
 		shader.setMatrix4("model", model);
-		cyborg.Draw(shader);
+		glBindVertexArray(quadVAO);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, toyboxTexture);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, toyboxSpecularTexture);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, toyboxNormalTexture);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, toyboxParallaxTexture);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
 
 		cubeShader.use();
 		cubeShader.setMatrix4("view", view);
