@@ -288,18 +288,21 @@ int main(int argc, char** argv) {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
-	unsigned int wallTexture, wallNormalTexture;
+	unsigned int wallTexture, wallNormalTexture, wallSpecularTexture;
 	wallTexture = loadTexture("resources/brickwall.jpg");
 	wallNormalTexture = loadTexture("resources/brickwall_normal.jpg");
+	wallSpecularTexture = loadTexture("resources/brickwall_specular.jpg");
 
 	Shader shader("shaders/normal_texture/blinn_phong_tangentspace.vs", "shaders/normal_texture/blinn_phong_tangentspace.fs");
 	Shader cubeShader("shaders/normal_texture/light.vs", "shaders/normal_texture/light.fs");
 
 	shader.use();
-	shader.setInt("texture_diffuse", 0);
-	shader.setInt("texture_normal", 1);
+	shader.setInt("material.texture_diffuse1", 0);
+	shader.setInt("material.texture_specular1", 1);
+	shader.setInt("material.texture_normal1", 2);
 
 	Cube cube;
+	Model cyborg("models/cyborg/cyborg.obj");
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -341,9 +344,17 @@ int main(int argc, char** argv) {
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, wallTexture);
 		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, wallSpecularTexture);
+		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, wallNormalTexture);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
+
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f));
+		model = glm::scale(model, glm::vec3(0.2f));
+		shader.setMatrix4("model", model);
+		cyborg.Draw(shader);
 
 		cubeShader.use();
 		cubeShader.setMatrix4("view", view);

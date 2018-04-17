@@ -38,7 +38,7 @@ std::vector<Mesh>& Model::getMeshes()
 void Model::loadModel(std::string path)
 {
 	Assimp::Importer import;
-	const aiScene* scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+	const aiScene* scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
 		std::cout << "Assimp load failed: " << import.GetErrorString() << std::endl;
@@ -92,6 +92,18 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 			texCoord.y = mesh->mTextureCoords[0][i].y;
 		}
 		vertex.texCoord = texCoord;
+		//ÇÐÏß
+		glm::vec3 tangent;
+		tangent.x = mesh->mTangents[i].x;
+		tangent.y = mesh->mTangents[i].y;
+		tangent.z = mesh->mTangents[i].z;
+		vertex.tangent = tangent;
+		//¸±ÇÐÏß
+		glm::vec3 bitangent;
+		bitangent.x = mesh->mBitangents[i].x;
+		bitangent.y = mesh->mBitangents[i].y;
+		bitangent.z = mesh->mBitangents[i].z;
+		vertex.bitangent = bitangent;
 
 		vertices.push_back(vertex);
 	}
@@ -113,6 +125,8 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
 		std::vector<Texture> reflectMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_reflect");
 		textures.insert(textures.end(), reflectMaps.begin(), reflectMaps.end());
+		std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
+		textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
 	}
 
 	return Mesh(vertices, indices, textures);

@@ -2,21 +2,27 @@
 
 out vec4 FragColor;
 
+struct Material{
+	sampler2D texture_diffuse1;
+	sampler2D texture_specular1;
+	sampler2D texture_reflect1;
+	sampler2D texture_normal1;
+};
+
 in vec2 texCoord;
 in vec3 tangentLightPos;
 in vec3 tangentViewPos;
 in vec3 tangentFragPos;
 
-uniform sampler2D texture_diffuse;
-uniform sampler2D texture_normal;
+uniform Material material;
 uniform bool blinn;
 
 void main()
 {
-	vec3 normal = texture(texture_normal, texCoord).rgb;
+	vec3 normal = texture(material.texture_normal1, texCoord).rgb;
 	normal = normalize(normal * 2.0 - 1.0);
 
-	vec3 texColor = texture(texture_diffuse, texCoord).rgb;
+	vec3 texColor = texture(material.texture_diffuse1, texCoord).rgb;
 	//环境光
 	vec3 ambient = texColor * 0.1;
 	//漫反射
@@ -33,7 +39,7 @@ void main()
 		vec3 reflectDir = reflect(-lightDir, normal);
 		spec = pow(max(dot(reflectDir, viewDir), 0.0), 32);
 	}
-	vec3 specular = vec3(0.2) * spec;
+	vec3 specular = texture(material.texture_specular1, texCoord).rgb * spec;
 	
 	FragColor = vec4(ambient + diffuse + specular, 1.0);
 };

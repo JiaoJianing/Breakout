@@ -21,6 +21,7 @@ void Mesh::Draw(Shader shader)
 	unsigned int diffuseNr = 1;
 	unsigned int specularNr = 1;
 	unsigned int reflectNr = 1;
+	unsigned int normalNr = 1;
 	for (unsigned int i = 0; i < textures.size(); i++) {
 		//激活纹理单元
 		glActiveTexture(GL_TEXTURE0 + i);
@@ -34,6 +35,9 @@ void Mesh::Draw(Shader shader)
 		}
 		else if (name == "texture_reflect") {
 			number = std::to_string(reflectNr++);
+		}
+		else if (name == "texture_normal") {
+			number = std::to_string(normalNr++);
 		}
 
 		shader.setInt(("material." + name + number).c_str(), i);
@@ -78,6 +82,12 @@ void Mesh::setupMesh()
 	//纹理
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoord));
+	//切线
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
+	//副切线
+	glEnableVertexAttribArray(4);
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
 
 	glBindVertexArray(0);
 #pragma endregion
