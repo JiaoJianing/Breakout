@@ -50,7 +50,9 @@ float cubeVertices[] = {
 Cube::Cube()
 {
 	m_pos = glm::vec3(0.0f);
+	m_scale = glm::vec3(1.0f);
 	m_color = glm::vec4(1.0f);
+	m_texture.setID(Texture::loadTexture("resources/default.png"));
 
 	glGenVertexArrays(1, &m_VAO);
 	glGenBuffers(1, &m_VBO);
@@ -66,6 +68,8 @@ Cube::Cube()
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 
 	glBindVertexArray(0);
+
+
 }
 
 
@@ -77,11 +81,14 @@ void Cube::Draw(Shader shader)
 {
 	glm::mat4 model;
 	model = glm::translate(model, m_pos);
-	model = glm::scale(model, glm::vec3(0.1f));
+	model = glm::scale(model, m_scale);
 	shader.setMatrix4("model", model);
-	shader.setVec3("lightColor", glm::vec3(m_color));
+	shader.setVec3("cubeColor", glm::vec3(m_color));
+	shader.setInt("cubeTexture", 0);
 
 	glBindVertexArray(m_VAO);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_texture.GetID());
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
 }
@@ -89,6 +96,11 @@ void Cube::Draw(Shader shader)
 void Cube::SetPos(const glm::vec3& pos)
 {
 	m_pos = pos;
+}
+
+void Cube::SetScale(const glm::vec3& scale)
+{
+	m_scale = scale;
 }
 
 void Cube::SetColor(const glm::vec4& color)

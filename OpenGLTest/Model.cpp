@@ -140,7 +140,7 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType 
 		mat->GetTexture(type, i, &str);
 		bool skip = false;
 		for (unsigned int j = 0; j < textures_loaded.size(); j++) {
-			if (std::strcmp(textures_loaded[j].path.c_str(), str.C_Str()) == 0) {
+			if (std::strcmp(textures_loaded[j].getPath().c_str(), str.C_Str()) == 0) {
 				textures.push_back(textures_loaded[j]);
 				skip = true;
 				break;
@@ -148,48 +148,12 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType 
 		}
 		if (!skip) {
 			//如果纹理没有加载过，就加载
-			Texture texture;
-			texture.id = textureFromFile(str.C_Str(), directory);
-			texture.type = typeName;
-			texture.path = str.C_Str();
+			std::string fullPath = directory + "/" + str.C_Str();
+			Texture texture(fullPath);
 			textures.push_back(texture);
 			textures_loaded.push_back(texture);
 		}
 	}
 
 	return textures;
-}
-
-unsigned int Model::textureFromFile(std::string name, std::string dir)
-{
-	std::string fullPath = dir + "/" + name;
-	unsigned int textureID;
-	glGenTextures(1, &textureID);
-
-	int width, height, nrComponents;
-	unsigned char* data = stbi_load(fullPath.c_str(), &width, &height, &nrComponents, 0);
-	if (data) {
-		GLenum format;
-		if (nrComponents == 1) format = GL_RED;
-		else if (nrComponents == 3) format = GL_RGB;
-		else if (nrComponents == 4) format = GL_RGBA;
-
-		glBindTexture(GL_TEXTURE_2D, textureID);
-		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		//设置纹理环绕、过滤方式
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		stbi_image_free(data);
-	}
-	else {
-		std::cout << "Failed to load diffuseTex" << std::endl;
-		stbi_image_free(data);
-	}
-
-	return textureID;
 }

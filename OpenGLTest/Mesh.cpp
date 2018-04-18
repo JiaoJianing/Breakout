@@ -26,7 +26,7 @@ void Mesh::Draw(Shader shader)
 		//激活纹理单元
 		glActiveTexture(GL_TEXTURE0 + i);
 		std::string number;
-		std::string name = textures[i].type;
+		std::string name = textures[i].getType();
 		if (name == "texture_diffuse") {
 			number = std::to_string(diffuseNr++);
 		}
@@ -41,7 +41,7 @@ void Mesh::Draw(Shader shader)
 		}
 
 		shader.setInt(("material." + name + number).c_str(), i);
-		glBindTexture(GL_TEXTURE_2D, textures[i].id);
+		glBindTexture(GL_TEXTURE_2D, textures[i].GetID());
 	}
 	glActiveTexture(GL_TEXTURE0);
 

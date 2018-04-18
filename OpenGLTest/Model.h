@@ -32,8 +32,6 @@ private:
 
 	std::vector<Texture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 
-	unsigned int textureFromFile(std::string name, std::string dir);
-
 private:
 	std::vector<Texture> textures_loaded;
 };
