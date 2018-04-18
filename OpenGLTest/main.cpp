@@ -14,6 +14,7 @@
 #include "Camera.h"
 #include "Model.h"
 #include "Cube.h"
+#include "Quad.h"
 
 float screenWidth = 800, screenHeight = 600;
 
@@ -160,46 +161,27 @@ int main(int argc, char** argv) {
 	glfwSetKeyCallback(window, key_click_callback);//键盘按下
 	glfwSetScrollCallback(window, scroll_callback);//鼠标滚轮
 
-	//全屏quad顶点数据
-	float quadVertices[] = {
-		//位置 uv坐标
-		-1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-		1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-		-1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-		1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-		1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-	};
-	unsigned int quadVAO, quadVBO;
-	glGenVertexArrays(1, &quadVAO);
-	glGenBuffers(1, &quadVBO);
-
-	glBindVertexArray(quadVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-
 	//准备浮点数帧缓冲，以实现hdr
 	unsigned int hdrFBO;
-	unsigned int hdrTexture;
+	unsigned int hdrTexture[2];
 	unsigned int hdrRBO;
 	glGenFramebuffers(1, &hdrFBO);
 	//颜色附件
-	glGenTextures(1, &hdrTexture);
+	glGenTextures(2, hdrTexture);
 	glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
-	glBindTexture(GL_TEXTURE_2D, hdrTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, screenWidth, screenHeight, 0, GL_RGB, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, hdrTexture, 0);
+	for (int i = 0; i < 2; i++) {
+		glBindTexture(GL_TEXTURE_2D, hdrTexture[i]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, screenWidth, screenHeight, 0, GL_RGB, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, hdrTexture[i], 0);
+	}
+	//显示告诉OpenGL使用MRT
+	unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+	glDrawBuffers(2, attachments);
 	//深度附件
 	glGenRenderbuffers(1, &hdrRBO);
 	glBindRenderbuffer(GL_RENDERBUFFER, hdrRBO);
@@ -207,6 +189,24 @@ int main(int argc, char** argv) {
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, hdrRBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	//准备gauss模糊需要的两个帧缓冲
+	unsigned int gaussFBO[2];
+	unsigned int gaussTexture[2];
+	glGenFramebuffers(2, gaussFBO);
+	glGenTextures(2, gaussTexture);
+	for (int i = 0; i < 2; i++) {
+		glBindFramebuffer(GL_FRAMEBUFFER, gaussFBO[i]);
+		glBindTexture(GL_TEXTURE_2D, gaussTexture[i]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, screenWidth, screenHeight, 0, GL_RGB, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gaussTexture[i], 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
 
 	//准备灯光数据
 	std::vector<glm::vec3> lightColors;
@@ -220,14 +220,22 @@ int main(int argc, char** argv) {
 	lightPositions.push_back(glm::vec3(0.3f, 0.0f, 0.0f));
 	lightPositions.push_back(glm::vec3(-0.1f, 0.0f, -2.0f));
 
-	Shader quadShader("shaders/hdr/full_screen.vs", "shaders/hdr/full_screen.fs");
-	Shader cubeShader("shaders/hdr/cube.vs", "shaders/hdr/cube.fs");
+	Shader screenShader("shaders/bloom/full_screen.vs", "shaders/bloom/full_screen.fs");
+	Shader gaussShader("shaders/bloom/full_screen.vs", "shaders/bloom/gauss.fs");
+	Shader cubeShader("shaders/bloom/cube.vs", "shaders/bloom/cube.fs");
 	
 	Cube cube;
 	cube.SetScale(glm::vec3(1.0f, 1.0f, 10.0f));
+	//全屏quad
+	Quad screen;
+	//高斯模糊quad
+	Quad gauss;
 
-	quadShader.use();
-	quadShader.setInt("hdrTexture", 0);
+	screenShader.use();
+	screenShader.setInt("hdrTexture", 0);
+	screenShader.setInt("gaussTexture", 1);
+	gaussShader.use();
+	gaussShader.setInt("texture1", 0);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -248,6 +256,7 @@ int main(int argc, char** argv) {
 		glm::mat4 view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
 		glm::mat4 projection = glm::perspective(camera.GetFov(), screenWidth / screenHeight, 0.1f, 100.0f);
 
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		//渲染到帧缓冲
 		glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -262,19 +271,34 @@ int main(int argc, char** argv) {
 			cubeShader.setVec3("lightPositions[" + std::to_string(i) + "]", lightPositions[i]);
 		}
 		cube.Draw(cubeShader);
+
+		//明亮部分进行gauss模糊
+		bool horizontal = true, first_iteration = true;
+		unsigned int amount = 10;
+		gaussShader.use();
+		for (unsigned int i = 0; i < amount; i++) {
+			glBindFramebuffer(GL_FRAMEBUFFER, gaussFBO[horizontal]);
+			gaussShader.setInt("horizontal", horizontal);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, first_iteration ? hdrTexture[1] : gaussTexture[!horizontal]);
+			gauss.Draw(gaussShader);
+			horizontal = !horizontal;
+			if (first_iteration) {
+				first_iteration = false;
+			}
+		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		//渲染全屏矩形
 		exposure = (sin(currentFrame) + 1) /2;
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		quadShader.use();
-		quadShader.setFloat("exposure", exposure);
-		glBindVertexArray(quadVAO);
+		screenShader.use();
+		screenShader.setFloat("exposure", exposure);
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, hdrTexture);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
+		glBindTexture(GL_TEXTURE_2D, hdrTexture[0]);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, gaussTexture[0]);
+		screen.Draw(screenShader);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
