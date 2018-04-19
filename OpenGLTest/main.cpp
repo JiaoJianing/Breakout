@@ -25,9 +25,7 @@ float exposure = 0.0f;
 
 Camera camera(screenWidth, screenHeight);
 
-glm::vec3 lightPos(1.0f, 1.0f, 3.0f);
-glm::vec3 lightSrcPos(2.0f, 1.0f, 2.0f);
-float lightRotAngle = 0;
+glm::vec3 lightPos(0.0f, 5.0f, -3.0f);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	screenWidth = width;
@@ -161,81 +159,92 @@ int main(int argc, char** argv) {
 	glfwSetKeyCallback(window, key_click_callback);//键盘按下
 	glfwSetScrollCallback(window, scroll_callback);//鼠标滚轮
 
-	//准备浮点数帧缓冲，以实现hdr
-	unsigned int hdrFBO;
-	unsigned int hdrTexture[2];
-	unsigned int hdrRBO;
-	glGenFramebuffers(1, &hdrFBO);
-	//颜色附件
-	glGenTextures(2, hdrTexture);
-	glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
-	for (int i = 0; i < 2; i++) {
-		glBindTexture(GL_TEXTURE_2D, hdrTexture[i]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, screenWidth, screenHeight, 0, GL_RGB, GL_FLOAT, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, hdrTexture[i], 0);
-	}
-	//显示告诉OpenGL使用MRT
-	unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-	glDrawBuffers(2, attachments);
+	//准备G-Buffer
+	unsigned int gBuffer;
+	unsigned int gTexture[3];
+	unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+	glGenFramebuffers(1, &gBuffer);
+	glGenTextures(3, gTexture);
+	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+	//存储位置的颜色附件
+	glBindTexture(GL_TEXTURE_2D, gTexture[0]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, screenWidth, screenHeight, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, attachments[0], GL_TEXTURE_2D, gTexture[0], 0);
+	//存储法线的颜色附件
+	glBindTexture(GL_TEXTURE_2D, gTexture[1]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, screenWidth, screenHeight, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, attachments[1], GL_TEXTURE_2D, gTexture[1], 0);
+	//存储颜色和反射度的颜色附件
+	glBindTexture(GL_TEXTURE_2D, gTexture[2]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screenWidth, screenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, attachments[2], GL_TEXTURE_2D, gTexture[2], 0);
+	//显式告诉OpenGL使用MRT
+	glDrawBuffers(3, attachments);
+
 	//深度附件
-	glGenRenderbuffers(1, &hdrRBO);
-	glBindRenderbuffer(GL_RENDERBUFFER, hdrRBO);
+	unsigned int gBufferRBO;
+	glGenRenderbuffers(1, &gBufferRBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, gBufferRBO);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, screenWidth, screenHeight);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, hdrRBO);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, gBufferRBO);
+	
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		std::cout << "Frame Buffer Not Complete" << std::endl;
+	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	//准备gauss模糊需要的两个帧缓冲
-	unsigned int gaussFBO[2];
-	unsigned int gaussTexture[2];
-	glGenFramebuffers(2, gaussFBO);
-	glGenTextures(2, gaussTexture);
-	for (int i = 0; i < 2; i++) {
-		glBindFramebuffer(GL_FRAMEBUFFER, gaussFBO[i]);
-		glBindTexture(GL_TEXTURE_2D, gaussTexture[i]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, screenWidth, screenHeight, 0, GL_RGB, GL_FLOAT, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gaussTexture[i], 0);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//准备灯光数据
+	const unsigned int NR_LIGHTS = 32;
+	std::vector<glm::vec3> lightPositions;
+	std::vector<glm::vec3> lightColors;
+	srand(13);
+	for (unsigned int i = 0; i < NR_LIGHTS; i++) {
+		// calculate slightly random offsets
+		float xPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+		float yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
+		float zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+		lightPositions.push_back(glm::vec3(xPos, yPos, zPos));
+		// also calculate random color
+		float rColor = ((rand() % 100) / 200.0f) + 0.5; // between 0.5 and 1.0
+		float gColor = ((rand() % 100) / 200.0f) + 0.5; // between 0.5 and 1.0
+		float bColor = ((rand() % 100) / 200.0f) + 0.5; // between 0.5 and 1.0
+		lightColors.push_back(glm::vec3(rColor, gColor, bColor));
 	}
 
-	//准备灯光数据
-	std::vector<glm::vec3> lightColors;
-	lightColors.push_back(glm::vec3(200.0f, 200.0f, 200.0f));
-	lightColors.push_back(glm::vec3(0.1f, 0.0f, 0.0f));
-	lightColors.push_back(glm::vec3(0.0f, 0.0f, 0.2f));
-	lightColors.push_back(glm::vec3(0.0f, 0.1f, 0.0f));
-	std::vector<glm::vec3> lightPositions;
-	lightPositions.push_back(glm::vec3(0.0f, 0.0f, -5.5f));
-	lightPositions.push_back(glm::vec3(-0.4f, 0.0f, 0.0f));
-	lightPositions.push_back(glm::vec3(0.3f, 0.0f, 0.0f));
-	lightPositions.push_back(glm::vec3(-0.1f, 0.0f, -2.0f));
+	//模型位置数据
+	std::vector<glm::vec3> objectPositions;
+	objectPositions.push_back(glm::vec3(-3.0, -3.0, -3.0));
+	objectPositions.push_back(glm::vec3(0.0, -3.0, -3.0));
+	objectPositions.push_back(glm::vec3(3.0, -3.0, -3.0));
+	objectPositions.push_back(glm::vec3(-3.0, -3.0, 0.0));
+	objectPositions.push_back(glm::vec3(0.0, -3.0, 0.0));
+	objectPositions.push_back(glm::vec3(3.0, -3.0, 0.0));
+	objectPositions.push_back(glm::vec3(-3.0, -3.0, 3.0));
+	objectPositions.push_back(glm::vec3(0.0, -3.0, 3.0));
+	objectPositions.push_back(glm::vec3(3.0, -3.0, 3.0));
 
-	Shader screenShader("shaders/bloom/full_screen.vs", "shaders/bloom/full_screen.fs");
-	Shader gaussShader("shaders/bloom/full_screen.vs", "shaders/bloom/gauss.fs");
-	Shader cubeShader("shaders/bloom/cube.vs", "shaders/bloom/cube.fs");
-	
-	Cube cube;
-	cube.SetScale(glm::vec3(1.0f, 1.0f, 10.0f));
-	//全屏quad
-	Quad screen;
-	//高斯模糊quad
-	Quad gauss;
+	Shader gbufferShader("shaders/deferred_rendering/gbuffer.vs", "shaders/deferred_rendering/gbuffer.fs");
+	Shader screenShader("shaders/deferred_rendering/full_screen.vs", "shaders/deferred_rendering/full_screen.fs");
 
 	screenShader.use();
-	screenShader.setInt("hdrTexture", 0);
-	screenShader.setInt("gaussTexture", 1);
-	gaussShader.use();
-	gaussShader.setInt("texture1", 0);
+	screenShader.setInt("texture_position", 0);
+	screenShader.setInt("texture_normal", 1);
+	screenShader.setInt("texture_colorSpecular", 2);
+
+	//全屏quad
+	Quad screen;
+	//模型
+	Model cyborg("models/cyborg/cyborg.obj");
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -258,46 +267,34 @@ int main(int argc, char** argv) {
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		//渲染到帧缓冲
-		glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+		glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		cubeShader.use();
-		cubeShader.setMatrix4("view", view);
-		cubeShader.setMatrix4("projection", projection);
-		cubeShader.setVec3("viewPos", camera.GetPos());
-		cubeShader.setInt("reverse_normal", 1);
-		cubeShader.setInt("blinn", blinn);
-		for (int i = 0; i < lightPositions.size(); i++) {
-			cubeShader.setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
-			cubeShader.setVec3("lightPositions[" + std::to_string(i) + "]", lightPositions[i]);
-		}
-		cube.Draw(cubeShader);
-
-		//明亮部分进行gauss模糊
-		bool horizontal = true, first_iteration = true;
-		unsigned int amount = 10;
-		gaussShader.use();
-		for (unsigned int i = 0; i < amount; i++) {
-			glBindFramebuffer(GL_FRAMEBUFFER, gaussFBO[horizontal]);
-			gaussShader.setInt("horizontal", horizontal);
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, first_iteration ? hdrTexture[1] : gaussTexture[!horizontal]);
-			gauss.Draw(gaussShader);
-			horizontal = !horizontal;
-			if (first_iteration) {
-				first_iteration = false;
-			}
+		gbufferShader.use();
+		gbufferShader.setMatrix4("view", view);
+		gbufferShader.setMatrix4("projection", projection);
+		for (int i = 0; i < objectPositions.size(); i++) {
+			model = glm::mat4();
+			model = glm::translate(model, objectPositions[i]);
+			model = glm::scale(model, glm::vec3(0.8f));
+			gbufferShader.setMatrix4("model", model);
+			cyborg.Draw(gbufferShader);
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		//渲染全屏矩形
-		exposure = (sin(currentFrame) + 1) /2;
+		//渲染到屏幕
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		screenShader.use();
-		screenShader.setFloat("exposure", exposure);
+		screenShader.setVec3("viewPos", camera.GetPos());
+		for (int i = 0; i < lightPositions.size(); i++) {
+			screenShader.setVec3("lights[" + std::to_string(i) + "].Position", lightPositions[i]);
+			screenShader.setVec3("lights[" + std::to_string(i) + "].Color", lightColors[i]);
+		}
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, hdrTexture[0]);
+		glBindTexture(GL_TEXTURE_2D, gTexture[0]);
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, gaussTexture[0]);
+		glBindTexture(GL_TEXTURE_2D, gTexture[1]);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, gTexture[2]);
 		screen.Draw(screenShader);
 
 		glfwSwapBuffers(window);
