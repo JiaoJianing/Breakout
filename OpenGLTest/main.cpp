@@ -220,6 +220,7 @@ int main(int argc, char** argv) {
 		float bColor = ((rand() % 100) / 200.0f) + 0.5; // between 0.5 and 1.0
 		lightColors.push_back(glm::vec3(rColor, gColor, bColor));
 	}
+	Cube cube[32];
 
 	//模型位置数据
 	std::vector<glm::vec3> objectPositions;
@@ -235,6 +236,7 @@ int main(int argc, char** argv) {
 
 	Shader gbufferShader("shaders/deferred_rendering/gbuffer.vs", "shaders/deferred_rendering/gbuffer.fs");
 	Shader screenShader("shaders/deferred_rendering/full_screen.vs", "shaders/deferred_rendering/full_screen.fs");
+	Shader lightBoxShader("shaders/deferred_rendering/light_box.vs", "shaders/deferred_rendering/light_box.fs");
 
 	screenShader.use();
 	screenShader.setInt("texture_position", 0);
@@ -296,6 +298,22 @@ int main(int argc, char** argv) {
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, gTexture[2]);
 		screen.Draw(screenShader);
+
+		//将gBuffer中的深度信息写入屏幕缓冲
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		lightBoxShader.use();
+		lightBoxShader.setMatrix4("view", view);
+		lightBoxShader.setMatrix4("projection", projection);
+		for (int i = 0; i < lightPositions.size(); i++) {
+			cube[i].SetScale(glm::vec3(0.2f));
+			cube[i].SetPos(lightPositions[i]);
+			cube[i].SetColor(lightColors[i]);
+			cube[i].Draw(lightBoxShader);
+		}
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
