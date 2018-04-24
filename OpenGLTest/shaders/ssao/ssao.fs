@@ -39,7 +39,7 @@ void main(){
 		offset.xyz /= offset.w;//Õ∏ ”ªÆ∑÷
 		offset.xyz = offset.xyz * 0.5 + 0.5; //to [0.0, 1.0]
 
-		float sampleDepth = -texture(texture_posDepth, offset.xy).w;
+		float sampleDepth = texture(texture_posDepth, offset.xy).z;
 
 		float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
 
