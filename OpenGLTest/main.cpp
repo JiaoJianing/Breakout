@@ -23,9 +23,8 @@ float screenWidth = 800, screenHeight = 600;
 float deltaFrame = 0.0f;
 float lastFrame = 0.0f;
 bool blinn = true;
-float exposure = 0.0f;
 
-glm::vec3 lightPos = glm::vec3(2.0, 4.0, -2.0);
+glm::vec3 lightPos = glm::vec3(2.0, 4.0, 2.0);
 glm::vec3 lightColor = glm::vec3(0.2, 0.2, 0.7);
 
 Camera camera(screenWidth, screenHeight);
@@ -166,35 +165,9 @@ int main(int argc, char** argv) {
 	glfwSetKeyCallback(window, key_click_callback);//¼üÅÌ°´ÏÂ
 	glfwSetScrollCallback(window, scroll_callback);//Êó±ê¹öÂÖ
 
-	glm::vec3 lightPositions[] = {
-		glm::vec3(0.0f, 0.0f, 10.0f),
-	};
-	glm::vec3 lightColors[] = {
-		glm::vec3(150.0f, 150.0f, 150.0f),
-	};
+	Model nanosuit("models/nanosuit/nanosuit.obj");
 
-	int nrRows = 7;
-	int nrColumns = 7;
-	float spacing = 2.5;
-
-	Sphere sphere;
-
-	Shader sphereShader("shaders/pbr/sphere.vs", "shaders/pbr/sphere.fs");
-	Shader lightShader("shaders/pbr/light.vs", "shaders/pbr/light.fs");
-
-	sphereShader.use();
-	sphereShader.setInt("texture_albedo", 0);
-	sphereShader.setInt("texture_normal", 1);
-	sphereShader.setInt("texture_metallic", 2);
-	sphereShader.setInt("texture_roughness", 3);
-	sphereShader.setInt("texture_ao", 4);
-
-	std::string path = "resources/pbr/rusted_iron/";
-	unsigned int albedoMap = Texture::loadTexture(path + "albedo.png");
-	unsigned int normalMap = Texture::loadTexture(path + "normal.png");
-	unsigned int metallicMap = Texture::loadTexture(path + "metallic.png");
-	unsigned int roughnessMap = Texture::loadTexture(path + "roughness.png");
-	unsigned int aoMap = Texture::loadTexture(path + "ao.png");
+	Shader nanosuitShader("shaders/cartoon/cartoon.vs", "shaders/cartoon/cartoon.fs");
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -215,51 +188,18 @@ int main(int argc, char** argv) {
 		glm::mat4 view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
 		glm::mat4 projection = glm::perspective(camera.GetFov(), screenWidth / screenHeight, 0.1f, 100.0f);
 
-		glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+		glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		sphereShader.use();
-		sphereShader.setMatrix4("view", view);
-		sphereShader.setMatrix4("projection", projection);
-		sphereShader.setVec3("viewPos", camera.GetPos());
-		for (unsigned int i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); i++) {
-			sphereShader.setVec3("lightPositions[" + std::to_string(i) + "]", lightPositions[i]);
-			sphereShader.setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
-		}
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, albedoMap);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, normalMap);
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, metallicMap);
-		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, roughnessMap);
-		glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, aoMap);
-
-		for (int row = 0; row < nrRows; row++) {
-			for (int col = 0; col < nrColumns; col++) {
-				model = glm::mat4();
-				model = glm::translate(model, glm::vec3((col - (nrColumns / 2))*spacing,
-														(row - (nrRows / 2))*spacing,
-														0.0));
-				sphereShader.setMatrix4("model", model);
-				sphere.Draw(sphereShader);
-			}
-		}
-
-		lightShader.use();
-		lightShader.setMatrix4("view", view);
-		lightShader.setMatrix4("projection", projection);
-		for (unsigned int i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); i++) {
-			glm::vec3 newPos = lightPositions[i];
-
-			model = glm::mat4();
-			model = glm::translate(model, newPos);
-			model = glm::scale(model, glm::vec3(0.5f));
-			lightShader.setMatrix4("model", model);
-			sphere.Draw(lightShader);
-		}
+		nanosuitShader.use();
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.2f));
+		nanosuitShader.setMatrix4("model", model);
+		nanosuitShader.setMatrix4("view", view);
+		nanosuitShader.setMatrix4("projection", projection);
+		nanosuitShader.setVec3("lightPos", lightPos);
+		nanosuit.Draw(nanosuitShader);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
