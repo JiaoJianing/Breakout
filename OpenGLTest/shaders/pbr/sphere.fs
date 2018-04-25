@@ -18,6 +18,10 @@ uniform vec3 viewPos;
 
 const float PI = 3.14159265359;
 
+const vec3 fogColor = vec3(0.5, 0.5, 0.5);
+const float maxFogDist = 30;
+const float minFogDist = 0.01;
+
 vec3 getNormalFromTexture(){
 	vec3 tangentNormal = texture(texture_normal, texCoords).xyz * 2.0 - 1.0;
 
@@ -117,6 +121,12 @@ void main(){
 	color = color / (color + vec3(1.0));
 	//gamma校正
 	color = pow(color, vec3(1.0/2.2));
+
+	//混合雾的颜色
+	float dist = length(viewPos - worldPos);
+	float fogFactor = (maxFogDist - dist) / (maxFogDist - minFogDist);
+	fogFactor = clamp(fogFactor, 0.0, 1.0);
+	color = mix(fogColor, color, fogFactor);
 
 	FragColor = vec4(color, 1.0);
 }
