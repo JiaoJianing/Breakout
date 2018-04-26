@@ -15,6 +15,8 @@ Game::Game(unsigned int w, unsigned int h)
 	, m_BallVelocity(100.0f, -350.0f)
 	, m_BallRadius(12.5f)
 	, m_Particles(0)
+	, m_Effects(0)
+	, m_ShakeTime(0.0f)
 {
 }
 
@@ -37,12 +39,17 @@ Game::~Game()
 		delete m_Particles;
 		m_Particles = 0;
 	}
+	if (m_Effects != 0) {
+		delete m_Effects;
+		m_Effects = 0;
+	}
 }
 
 void Game::Init()
 {
 	ResourceManager::getInstance()->LoadShader("sprite", "shaders/breakout/sprite.vs", "shaders/breakout/sprite.fs");
 	ResourceManager::getInstance()->LoadShader("particle", "shaders/breakout/particle.vs", "shaders/breakout/particle.fs");
+	ResourceManager::getInstance()->LoadShader("effects", "shaders/breakout/effects.vs", "shaders/breakout/effects.fs");
 
 	glm::mat4 projection = glm::ortho(0.0f, float(Width), float(Height), 0.0f, -1.0f, 1.0f);
 	ResourceManager::getInstance()->GetShader("sprite").use().setInt("sprite", 0);
@@ -79,6 +86,8 @@ void Game::Init()
 	
 	m_Particles = new ParticleGenerator(ResourceManager::getInstance()->GetShader("particle"),
 		ResourceManager::getInstance()->GetTexture("particle"), 500);
+
+	m_Effects = new PostProcessor(ResourceManager::getInstance()->GetShader("effects"), this->Width, this->Height);
 }
 
 void Game::ProcessInput(float dt)
@@ -117,34 +126,44 @@ void Game::Update(float dt)
 	//碰撞检测
 	DoCollision();
 
+	//更新粒子
+	m_Particles->Update(dt, *m_Ball, 2, glm::vec2(m_Ball->Radius / 2));
+
+	if (m_ShakeTime > 0.0f) {
+		m_ShakeTime -= dt;
+		if (m_ShakeTime <= 0.0f) {
+			m_Effects->Shake = false;
+		}
+	}
+
 	//球掉下底部则重置游戏
 	if (m_Ball->Position.y >= this->Height) {
 		this->ResetLevel();
 		this->ResetPlayer();
 	}
-
-	//更新粒子
-	m_Particles->Update(dt, *m_Ball, 2, glm::vec2(m_Ball->Radius / 2));
 }
 
 void Game::Render()
 {
 	if (this->State == GameState::GAME_ACTIVE) {
+		
+		m_Effects->BeginRender();
+
 		//绘制背景
 		m_SpriteRenderer->DrawSprite(ResourceManager::getInstance()->GetTexture("background"), 
 			glm::vec2(0, 0), glm::vec2(this->Width, this->Height), 0.0f);
-
 		//绘制关卡
 		this->Levels[this->Level].Draw(*m_SpriteRenderer);
-
 		//绘制底部挡板
 		m_Player->Draw(*m_SpriteRenderer);
-
 		//绘制粒子
 		m_Particles->Draw();
-		
 		//绘制球
 		m_Ball->Draw(*m_SpriteRenderer);
+
+		m_Effects->EndRender();
+
+		m_Effects->Render(glfwGetTime());
 	}
 }
 
@@ -158,6 +177,10 @@ void Game::DoCollision()
 				//不是实心 销毁砖块
 				if (!box.IsSolid) {
 					box.Destroyed = true;
+				}
+				else {//碰撞实心砖块，激活shake效果
+					m_ShakeTime = 0.05f;
+					m_Effects->Shake = true;
 				}
 
 				//碰撞处理
@@ -202,8 +225,8 @@ void Game::DoCollision()
 		glm::vec2 oldVelocity = m_Ball->Velocity;
 		m_Ball->Velocity.x = m_BallVelocity.x * percentage * strength;
 		//m_Ball->Velocity.y = -m_Ball->Velocity.y;
-		m_Ball->Velocity.y = -1 * std::abs(m_Ball->Velocity.y);
 		m_Ball->Velocity = glm::normalize(m_Ball->Velocity) * glm::length(oldVelocity);
+		m_Ball->Velocity.y = -1 * std::abs(m_Ball->Velocity.y);
 	}
 }
 
@@ -259,9 +282,9 @@ Collision Game::checkCollision(BallObject& one, GameObject& two)
 	//AABB上距离圆心最近点
 	glm::vec2 closest = aabb_center + clamped;
 	//求圆心和closest的距离
-	difference = center - closest;
+	difference = closest - center;
 
-	if (glm::length(difference) <= one.Radius) {
+	if (glm::length(difference) < one.Radius) {
 		return std::make_tuple(true, vectorDirection(difference), difference);
 	}
 	else {

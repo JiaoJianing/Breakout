@@ -3,6 +3,7 @@
 #include "GameLevel.h"
 #include "BallObject.h"
 #include "ParticleGenerator.h"
+#include "PostProcessor.h"
 #include <tuple>
 
 enum GameState {
@@ -57,5 +58,8 @@ private:
 	glm::vec2 m_BallVelocity;
 	float m_BallRadius;
 	ParticleGenerator* m_Particles;
+	PostProcessor* m_Effects;
+
+	float m_ShakeTime;
 };
 

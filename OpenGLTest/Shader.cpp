@@ -132,7 +132,7 @@ unsigned int Shader::compileVertexShader(const GLchar* vertexPath)
 	glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
 	if (!success) {
 		glGetShaderInfoLog(vertex, 512, NULL, infoLog);
-		std::cout << "Compile Vertex Shader Failed: " << infoLog << std::endl;
+		std::cout << "Compile Vertex Shader " <<  vertexPath <<" Failed: " << infoLog << std::endl;
 	}
 
 	return vertex;
@@ -154,7 +154,7 @@ unsigned int Shader::compileFragmentShader(const GLchar* fragmentPath)
 	glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
 	if (!success) {
 		glGetShaderInfoLog(fragment, 512, NULL, infoLog);
-		std::cout << "Compile Fragment Shader Failed: " << infoLog << std::endl;
+		std::cout << "Compile Fragment Shader " << fragmentPath << "  Failed: " << infoLog << std::endl;
 	}
 
 	return fragment;
@@ -177,7 +177,7 @@ unsigned int Shader::compileGeometryShader(const GLchar* geometryPath)
 		glGetShaderiv(geometry, GL_COMPILE_STATUS, &success);
 		if (!success) {
 			glGetShaderInfoLog(geometry, 512, NULL, infoLog);
-			std::cout << "Compile Geometry Shader Failed: " << infoLog << std::endl;
+			std::cout << "Compile Geometry Shader " << geometryPath << "  Failed: " << infoLog << std::endl;
 		}
 	}
 

@@ -43,6 +43,7 @@ void ParticleGenerator::Update(float dt, GameObject& object, unsigned int newPar
 
 void ParticleGenerator::Draw()
 {
+	glActiveTexture(GL_TEXTURE0);
 	//粒子密集处会产生glow效果
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	this->m_Shader.use();
