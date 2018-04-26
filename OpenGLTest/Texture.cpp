@@ -72,7 +72,7 @@ unsigned int Texture::loadTexture(const std::string& path)
 		stbi_image_free(data);
 	}
 	else {
-		std::cout << "Failed to load diffuseTex" << std::endl;
+		std::cout << "Failed to load texture: " << path << std::endl;
 		stbi_image_free(data);
 	}
 

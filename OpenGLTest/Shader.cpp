@@ -44,9 +44,11 @@ void Shader::load(const GLchar* vertexPath, const GLchar* fragmentPath, const GL
 	glDeleteShader(geometry);
 }
 
-void Shader::use()
+Shader& Shader::use()
 {
 	glUseProgram(ID);
+
+	return *this;
 }
 
 void Shader::setBool(const std::string& name, bool value) const
