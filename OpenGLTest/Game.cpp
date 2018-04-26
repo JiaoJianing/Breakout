@@ -14,6 +14,7 @@ Game::Game(unsigned int w, unsigned int h)
 	, m_Ball(0)
 	, m_BallVelocity(100.0f, -350.0f)
 	, m_BallRadius(12.5f)
+	, m_Particles(0)
 {
 }
 
@@ -32,15 +33,22 @@ Game::~Game()
 		delete m_Ball;
 		m_Ball = 0;
 	}
+	if (m_Particles != 0) {
+		delete m_Particles;
+		m_Particles = 0;
+	}
 }
 
 void Game::Init()
 {
 	ResourceManager::getInstance()->LoadShader("sprite", "shaders/breakout/sprite.vs", "shaders/breakout/sprite.fs");
+	ResourceManager::getInstance()->LoadShader("particle", "shaders/breakout/particle.vs", "shaders/breakout/particle.fs");
 
 	glm::mat4 projection = glm::ortho(0.0f, float(Width), float(Height), 0.0f, -1.0f, 1.0f);
 	ResourceManager::getInstance()->GetShader("sprite").use().setInt("sprite", 0);
 	ResourceManager::getInstance()->GetShader("sprite").setMatrix4("projection", projection);
+	ResourceManager::getInstance()->GetShader("particle").use().setInt("particle", 0);
+	ResourceManager::getInstance()->GetShader("particle").setMatrix4("projection", projection);
 
 	//加载纹理
 	ResourceManager::getInstance()->LoadTexture("background", "resources/background.jpg");
@@ -48,6 +56,8 @@ void Game::Init()
 	ResourceManager::getInstance()->LoadTexture("block", "resources/block.png");
 	ResourceManager::getInstance()->LoadTexture("block_solid", "resources/block_solid.png");
 	ResourceManager::getInstance()->LoadTexture("paddle", "resources/paddle.png");
+	ResourceManager::getInstance()->LoadTexture("particle", "resources/particle.png");
+	
 	//加载关卡
 	GameLevel one; one.Load("levels/one.lvl", this->Width, this->Height * 0.5);
 	GameLevel two; two.Load("levels/two.lvl", this->Width, this->Height * 0.5);
@@ -60,10 +70,15 @@ void Game::Init()
 	this->Level = 0;
 
 	m_SpriteRenderer = new SpriteRenderer(ResourceManager::getInstance()->GetShader("sprite"));
+	
 	glm::vec2 playerPos = glm::vec2(this->Width / 2 - m_PlayerSize.x / 2, this->Height - m_PlayerSize.y);
 	m_Player = new GameObject(playerPos, m_PlayerSize, ResourceManager::getInstance()->GetTexture("paddle"));
+	
 	glm::vec2 ballPos = playerPos + glm::vec2(m_PlayerSize.x / 2 - m_BallRadius, -m_BallRadius * 2);
 	m_Ball = new BallObject(ballPos, m_BallRadius, m_BallVelocity, ResourceManager::getInstance()->GetTexture("face"));
+	
+	m_Particles = new ParticleGenerator(ResourceManager::getInstance()->GetShader("particle"),
+		ResourceManager::getInstance()->GetTexture("particle"), 500);
 }
 
 void Game::ProcessInput(float dt)
@@ -107,6 +122,9 @@ void Game::Update(float dt)
 		this->ResetLevel();
 		this->ResetPlayer();
 	}
+
+	//更新粒子
+	m_Particles->Update(dt, *m_Ball, 2, glm::vec2(m_Ball->Radius / 2));
 }
 
 void Game::Render()
@@ -121,6 +139,9 @@ void Game::Render()
 
 		//绘制底部挡板
 		m_Player->Draw(*m_SpriteRenderer);
+
+		//绘制粒子
+		m_Particles->Draw();
 		
 		//绘制球
 		m_Ball->Draw(*m_SpriteRenderer);

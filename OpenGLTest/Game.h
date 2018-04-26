@@ -2,6 +2,7 @@
 #include "SpriteRenderer.h"
 #include "GameLevel.h"
 #include "BallObject.h"
+#include "ParticleGenerator.h"
 #include <tuple>
 
 enum GameState {
@@ -55,5 +56,6 @@ private:
 	BallObject* m_Ball;
 	glm::vec2 m_BallVelocity;
 	float m_BallRadius;
+	ParticleGenerator* m_Particles;
 };
 
