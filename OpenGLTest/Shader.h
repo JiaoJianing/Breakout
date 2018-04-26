@@ -10,8 +10,11 @@ public:
 	unsigned int ID;
 
 	//构造器读取并构建着色器
+	Shader();
 	Shader(const GLchar* vertexPath, const GLchar* fragmentPath, const GLchar* geometryPath = NULL);
 	~Shader();
+
+	void load(const GLchar* vertexPath, const GLchar* fragmentPath, const GLchar* geometryPath = NULL);
 
 	//使用/激活程序
 	void use();

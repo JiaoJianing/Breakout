@@ -20,8 +20,28 @@ Shader::Shader(const GLchar* vertexPath, const GLchar* fragmentPath, const GLcha
 	glDeleteShader(geometry);
 }
 
+Shader::Shader()
+	:ID(-1)
+{
+}
+
 Shader::~Shader()
 {
+}
+
+void Shader::load(const GLchar* vertexPath, const GLchar* fragmentPath, const GLchar* geometryPath /*= NULL*/)
+{
+	unsigned int vertex, fragment, geometry;
+	vertex = compileVertexShader(vertexPath);
+	fragment = compileFragmentShader(fragmentPath);
+	geometry = compileGeometryShader(geometryPath);
+
+	linkProgram(vertex, fragment, geometry);
+
+	//删除着色器，它们已经链接到我们的程序中了，不再需要
+	glDeleteShader(vertex);
+	glDeleteShader(fragment);
+	glDeleteShader(geometry);
 }
 
 void Shader::use()

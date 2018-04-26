@@ -17,6 +17,7 @@
 #include "Cube.h"
 #include "Quad.h"
 #include "Sphere.h"
+#include "Text.h"
 
 float screenWidth = 800, screenHeight = 600;
 
@@ -159,6 +160,9 @@ int main(int argc, char** argv) {
 
 	glEnable(GL_DEPTH_TEST);
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_move_callback);//鼠标移动
 	glfwSetMouseButtonCallback(window, mouse_click_callback);//鼠标点击
@@ -167,7 +171,8 @@ int main(int argc, char** argv) {
 
 	Model nanosuit("models/nanosuit/nanosuit.obj");
 
-	Shader nanosuitShader("shaders/cartoon/cartoon.vs", "shaders/cartoon/cartoon.fs");
+	Shader nanosuitShader("shaders/text/cartoon.vs", "shaders/text/cartoon.fs");
+	Shader textShader("shaders/text/text.vs", "shaders/text/text.fs");
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -188,6 +193,8 @@ int main(int argc, char** argv) {
 		glm::mat4 view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
 		glm::mat4 projection = glm::perspective(camera.GetFov(), screenWidth / screenHeight, 0.1f, 100.0f);
 
+		glm::mat4 ortho = glm::ortho(0.0f, screenWidth, 0.0f, screenHeight);
+
 		glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -200,6 +207,11 @@ int main(int argc, char** argv) {
 		nanosuitShader.setMatrix4("projection", projection);
 		nanosuitShader.setVec3("lightPos", lightPos);
 		nanosuit.Draw(nanosuitShader);
+
+		textShader.use();
+		textShader.setMatrix4("projection", ortho);
+		Text::getInstance()->Draw(textShader, L"Cartoon Render", 25.0f, 25.0f, 1.0f, glm::vec3(0.5f, 0.8f, 0.2f));
+		Text::getInstance()->Draw(textShader, L"卡通渲染", 25.0f, screenHeight - 50.0f, 1.0f, glm::vec3(0.5f, 0.8f, 0.2f));
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

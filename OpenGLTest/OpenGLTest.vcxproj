@@ -70,8 +70,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>../glfw/include;../glad/include;../glm;../assimp/include;$(IncludePath)</IncludePath>
-    <LibraryPath>../glfw/libs;../assimp;$(LibraryPath)</LibraryPath>
+    <IncludePath>../glfw/include;../glad/include;../glm;../assimp/include;../freetype/include;$(IncludePath)</IncludePath>
+    <LibraryPath>../glfw/libs;../assimp;../freetype;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>../glfw/include;../glad/include;../glm;../assimp/include;$(IncludePath)</IncludePath>
@@ -85,7 +85,7 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;assimp-vc140-mt.lib;freetyped.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -136,6 +136,7 @@
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Sphere.cpp" />
     <ClCompile Include="stb_image.cpp" />
+    <ClCompile Include="Text.cpp" />
     <ClCompile Include="Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -147,6 +148,7 @@
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="stb_image.h" />
+    <ClInclude Include="Text.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
