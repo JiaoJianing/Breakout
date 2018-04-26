@@ -101,6 +101,12 @@ void Game::Update(float dt)
 
 	//碰撞检测
 	DoCollision();
+
+	//球掉下底部则重置游戏
+	if (m_Ball->Position.y >= this->Height) {
+		this->ResetLevel();
+		this->ResetPlayer();
+	}
 }
 
 void Game::Render()
@@ -123,15 +129,84 @@ void Game::Render()
 
 void Game::DoCollision()
 {
+	//球和砖块的碰撞
 	for (GameObject & box : this->Levels[this->Level].Bricks) {
 		if (!box.Destroyed) {
-			if (checkCollision(*m_Ball, box)) {
+			Collision collsion = checkCollision(*m_Ball, box);
+			if (std::get<0>(collsion)) {//检测到碰撞
+				//不是实心 销毁砖块
 				if (!box.IsSolid) {
 					box.Destroyed = true;
+				}
+
+				//碰撞处理
+				Direction dir = std::get<1>(collsion);
+				glm::vec2 diff_vector = std::get<2>(collsion);
+				if (dir == Direction::LEFT || dir == Direction::RIGHT) {
+					m_Ball->Velocity.x = -m_Ball->Velocity.x;
+					//重定位
+					float penetration = m_Ball->Radius - std::abs(diff_vector.x);
+					if (dir == Direction::LEFT) {
+						m_Ball->Position.x += penetration; //向右移动
+					}
+					else {
+						m_Ball->Position.x -= penetration; //向左移动
+					}
+				}
+				else {
+					m_Ball->Velocity.y = -m_Ball->Velocity.y;
+					//重定位
+					float penetration = m_Ball->Radius - std::abs(diff_vector.y);
+					if (dir == Direction::UP) {
+						m_Ball->Position.y -= penetration; //向上移动
+					}
+					else {
+						m_Ball->Position.y += penetration; //向下移动
+					}
 				}
 			}
 		}
 	}
+
+	//球和底部挡板的碰撞
+	Collision result = checkCollision(*m_Ball, *m_Player);
+	if (!m_Ball->Stuck && std::get<0>(result)) {
+		//根据碰到挡板的位置判断球的速度改变
+		float centerBoard = m_Player->Position.x + m_PlayerSize.x / 2;
+		float distance = (m_Ball->Position.x + m_Ball->Radius) - centerBoard;
+		float percentage = distance / (m_PlayerSize.x / 2);
+
+		//根据结果移动
+		float strength = 2.0f;
+		glm::vec2 oldVelocity = m_Ball->Velocity;
+		m_Ball->Velocity.x = m_BallVelocity.x * percentage * strength;
+		//m_Ball->Velocity.y = -m_Ball->Velocity.y;
+		m_Ball->Velocity.y = -1 * std::abs(m_Ball->Velocity.y);
+		m_Ball->Velocity = glm::normalize(m_Ball->Velocity) * glm::length(oldVelocity);
+	}
+}
+
+void Game::ResetLevel()
+{
+	if (this->Level == 0) {
+		this->Levels[0].Load("levels/one.lvl", this->Width, this->Height * 0.5f);
+	}
+	else if (this->Level == 1) {
+		this->Levels[1].Load("levels/two.lvl", this->Width, this->Height * 0.5f);
+	}
+	else if (this->Level == 2) {
+		this->Levels[2].Load("levels/three.lvl", this->Width, this->Height * 0.5f);
+	}
+	else if (this->Level == 3) {
+		this->Levels[3].Load("levels/four.lvl", this->Width, this->Height * 0.5f);
+	}
+}
+
+void Game::ResetPlayer()
+{
+	m_Player->Size = m_PlayerSize;
+	m_Player->Position = glm::vec2(this->Width / 2 - m_PlayerSize.x / 2, this->Height - m_PlayerSize.y);
+	m_Ball->Reset(m_Player->Position + glm::vec2(m_PlayerSize.x / 2 - m_BallRadius, -m_BallRadius * 2), m_BallVelocity);
 }
 
 bool Game::checkCollision(GameObject& one, GameObject& two)
@@ -147,7 +222,7 @@ bool Game::checkCollision(GameObject& one, GameObject& two)
 	return collisionX && collisionY;
 }
 
-bool Game::checkCollision(BallObject& one, GameObject& two)
+Collision Game::checkCollision(BallObject& one, GameObject& two)
 {
 	//使用球形AABB 检测碰撞
 	
@@ -164,7 +239,32 @@ bool Game::checkCollision(BallObject& one, GameObject& two)
 	glm::vec2 closest = aabb_center + clamped;
 	//求圆心和closest的距离
 	difference = center - closest;
-	float distance = glm::length(difference);
 
-	return distance < one.Radius;
+	if (glm::length(difference) <= one.Radius) {
+		return std::make_tuple(true, vectorDirection(difference), difference);
+	}
+	else {
+		return std::make_tuple(false, Direction::UP, glm::vec2(0.0f, 0.0f));
+	}
+}
+
+Direction Game::vectorDirection(glm::vec2 target)
+{
+	glm::vec2 compass[] = {
+		glm::vec2(0.0f, 1.0f),
+		glm::vec2(1.0f, 0.0f),
+		glm::vec2(0.0f, -1.0f),
+		glm::vec2(-1.0f, 0.0f),
+	};
+	float max = 0.0f;
+	unsigned int best_match = -1;
+	for (unsigned int i = 0; i < 4; i++) {
+		float dot_product = glm::dot(glm::normalize(target), compass[i]);
+		if (dot_product > max) {
+			max = dot_product;
+			best_match = i;
+		}
+	}
+
+	return (Direction)best_match;
 }

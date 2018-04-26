@@ -2,12 +2,22 @@
 #include "SpriteRenderer.h"
 #include "GameLevel.h"
 #include "BallObject.h"
+#include <tuple>
 
 enum GameState {
 	GAME_ACTIVE,
 	GAME_MENU,
 	GAME_WIN
 };
+
+enum Direction {
+	UP,
+	RIGHT,
+	DOWN,
+	LEFT
+};
+
+typedef std::tuple<bool, Direction, glm::vec2> Collision;
 
 class Game
 {
@@ -29,9 +39,13 @@ public:
 
 	void DoCollision();
 
+	void ResetLevel();
+	void ResetPlayer();
+
 private:
 	bool checkCollision(GameObject& one, GameObject& two);
-	bool checkCollision(BallObject& one, GameObject& two);
+	Collision checkCollision(BallObject& one, GameObject& two);
+	Direction vectorDirection(glm::vec2 target);
 
 private:
 	SpriteRenderer * m_SpriteRenderer;
