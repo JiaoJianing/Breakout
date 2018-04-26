@@ -47,7 +47,7 @@ void Text::init()
 	if (FT_Init_FreeType(&m_Ft)) {
 		std::cout << "Failed to init FreeType Library" << std::endl;
 	}
-	if (FT_New_Face(m_Ft, "fonts/hyb3gjm.ttf", 0, &m_Face)) {
+	if (FT_New_Face(m_Ft, "fonts/HYQingTing-55J.ttf", 0, &m_Face)) {
 		std::cout << "Failed to load font" << std::endl;
 	}
 	FT_Set_Pixel_Sizes(m_Face, 0, 36);
@@ -111,6 +111,7 @@ void Text::Draw(Shader shader, const std::wstring& text, float x, float y, float
 
 		float w = ch.size.x * scale;
 		float h = ch.size.y * scale;
+		//屏幕坐标左上角是（0,0）纹理坐标左下角是（0,0）
 		float vertices[6][4] = {
 			{ xpos, ypos + h, 0.0, 0.0 },
 		{ xpos, ypos, 0.0, 1.0 },
