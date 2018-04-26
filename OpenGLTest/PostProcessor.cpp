@@ -40,6 +40,7 @@ PostProcessor::PostProcessor(Shader shader, unsigned int width, unsigned int hei
 
 	//初始化渲染数据和uniform数据
 	this->initRenderData();
+	this->PostProcessShader.use();
 	this->PostProcessShader.setInt("scene", 0);
 	float offset = 1.0f / 300.0f;
 	float offsets[9][2] = {
