@@ -47,7 +47,7 @@ void Text::init()
 	if (FT_Init_FreeType(&m_Ft)) {
 		std::cout << "Failed to init FreeType Library" << std::endl;
 	}
-	if (FT_New_Face(m_Ft, "fonts/HYQingTing-55J.ttf", 0, &m_Face)) {
+	if (FT_New_Face(m_Ft, "asset/fonts/HYQingTing-55J.ttf", 0, &m_Face)) {
 		std::cout << "Failed to load font" << std::endl;
 	}
 	FT_Set_Pixel_Sizes(m_Face, 0, 36);

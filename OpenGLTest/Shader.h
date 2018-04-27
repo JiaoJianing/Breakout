@@ -17,7 +17,7 @@ public:
 	void load(const GLchar* vertexPath, const GLchar* fragmentPath, const GLchar* geometryPath = NULL);
 
 	//使用/激活程序
-	void use();
+	Shader& use();
 
 	//uniform 工具函数
 	void setBool(const std::string& name, bool value) const;
