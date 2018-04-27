@@ -13,5 +13,6 @@ public:
 
 	float Radius;
 	bool Stuck;
+	bool Stick, PassThrough;
 };
 

@@ -4,6 +4,7 @@
 #include "BallObject.h"
 #include "ParticleGenerator.h"
 #include "PostProcessor.h"
+#include "PowerUp.h"
 #include <tuple>
 
 enum GameState {
@@ -19,6 +20,13 @@ enum Direction {
 	LEFT
 };
 
+#define Powerup_Speed "speed"
+#define Powerup_Sticky "sticky"
+#define Powerup_PassThrough "pass-through"
+#define Powerup_PadIncrease "pad-increase"
+#define Powerup_Confuse "confuse"
+#define Powerup_Chaos "chaos"
+
 typedef std::tuple<bool, Direction, glm::vec2> Collision;
 
 class Game
@@ -33,6 +41,8 @@ public:
 	std::vector<GameLevel> Levels;
 	unsigned int Level;
 
+	std::vector<PowerUp> PowerUps;
+
 	void Init();
 
 	void ProcessInput(float dt);
@@ -44,10 +54,16 @@ public:
 	void ResetLevel();
 	void ResetPlayer();
 
+	void SpawnPowerUps(GameObject& block);
+	void UpdatePowerUps(float dt);
+	void ActivatePowerUp(PowerUp& powerup);
+
 private:
 	bool checkCollision(GameObject& one, GameObject& two);
 	Collision checkCollision(BallObject& one, GameObject& two);
 	Direction vectorDirection(glm::vec2 target);
+	bool shouldSpawn(unsigned int chance);
+	bool isOtherPowerUpActive(std::string type);
 
 private:
 	SpriteRenderer * m_SpriteRenderer;
