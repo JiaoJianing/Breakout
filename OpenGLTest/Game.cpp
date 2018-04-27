@@ -18,6 +18,7 @@ Game::Game(unsigned int w, unsigned int h)
 	, m_Particles(0)
 	, m_Effects(0)
 	, m_ShakeTime(0.0f)
+	, m_SoundEngine(0)
 {
 }
 
@@ -43,6 +44,10 @@ Game::~Game()
 	if (m_Effects != 0) {
 		delete m_Effects;
 		m_Effects = 0;
+	}
+	if (m_SoundEngine != 0) {
+		m_SoundEngine->drop();
+		m_SoundEngine = 0;
 	}
 }
 
@@ -95,6 +100,9 @@ void Game::Init()
 		ResourceManager::getInstance()->GetTexture("particle"), 500);
 
 	m_Effects = new PostProcessor(ResourceManager::getInstance()->GetShader("effects"), this->Width, this->Height);
+
+	m_SoundEngine = irrklang::createIrrKlangDevice();
+	m_SoundEngine->play2D("audios/breakout.mp3", true);
 }
 
 void Game::ProcessInput(float dt)
@@ -196,10 +204,12 @@ void Game::DoCollision()
 					box.Destroyed = true;
 					//随机生成道具
 					this->SpawnPowerUps(box);
+					m_SoundEngine->play2D("audios/bleep.mp3", false);
 				}
 				else {//碰撞实心砖块，激活shake效果
 					m_ShakeTime = 0.05f;
 					m_Effects->Shake = true;
+					m_SoundEngine->play2D("audios/solid.wav", false);
 				}
 
 				//碰撞处理
@@ -253,6 +263,7 @@ void Game::DoCollision()
 
 		//更新小球sticky状态
 		m_Ball->Stuck = m_Ball->Stick;
+		m_SoundEngine->play2D("audios/bleep.wav", false);
 	}
 
 	//检查道具和底部或挡板的碰撞
@@ -266,6 +277,7 @@ void Game::DoCollision()
 				ActivatePowerUp(powerUp);
 				powerUp.Destroyed = true;
 				powerUp.Activated = true;
+				m_SoundEngine->play2D("audios/powerup.wav", false);
 			}
 		}
 	}

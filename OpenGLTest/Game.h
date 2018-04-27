@@ -5,6 +5,7 @@
 #include "ParticleGenerator.h"
 #include "PostProcessor.h"
 #include "PowerUp.h"
+#include <irrKlang.h>
 #include <tuple>
 
 enum GameState {
@@ -75,6 +76,8 @@ private:
 	float m_BallRadius;
 	ParticleGenerator* m_Particles;
 	PostProcessor* m_Effects;
+
+	irrklang::ISoundEngine* m_SoundEngine;
 
 	float m_ShakeTime;
 };
