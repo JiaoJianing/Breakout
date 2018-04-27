@@ -53,9 +53,9 @@ Game::~Game()
 
 void Game::Init()
 {
-	ResourceManager::getInstance()->LoadShader("sprite", "shaders/breakout/sprite.vs", "shaders/breakout/sprite.fs");
-	ResourceManager::getInstance()->LoadShader("particle", "shaders/breakout/particle.vs", "shaders/breakout/particle.fs");
-	ResourceManager::getInstance()->LoadShader("effects", "shaders/breakout/effects.vs", "shaders/breakout/effects.fs");
+	ResourceManager::getInstance()->LoadShader("sprite", "asset/shaders/breakout/sprite.vs", "asset/shaders/breakout/sprite.fs");
+	ResourceManager::getInstance()->LoadShader("particle", "asset/shaders/breakout/particle.vs", "asset/shaders/breakout/particle.fs");
+	ResourceManager::getInstance()->LoadShader("effects", "asset/shaders/breakout/effects.vs", "asset/shaders/breakout/effects.fs");
 
 	glm::mat4 projection = glm::ortho(0.0f, float(Width), float(Height), 0.0f, -1.0f, 1.0f);
 	ResourceManager::getInstance()->GetShader("sprite").use().setInt("sprite", 0);
@@ -64,24 +64,24 @@ void Game::Init()
 	ResourceManager::getInstance()->GetShader("particle").setMatrix4("projection", projection);
 
 	//加载纹理
-	ResourceManager::getInstance()->LoadTexture("background", "resources/background.jpg");
-	ResourceManager::getInstance()->LoadTexture("face", "resources/awesomeface.png");
-	ResourceManager::getInstance()->LoadTexture("block", "resources/block.png");
-	ResourceManager::getInstance()->LoadTexture("block_solid", "resources/block_solid.png");
-	ResourceManager::getInstance()->LoadTexture("paddle", "resources/paddle.png");
-	ResourceManager::getInstance()->LoadTexture("particle", "resources/particle.png");
-	ResourceManager::getInstance()->LoadTexture(Powerup_Speed, "resources/powerup_speed.png");
-	ResourceManager::getInstance()->LoadTexture(Powerup_Sticky, "resources/powerup_sticky.png");
-	ResourceManager::getInstance()->LoadTexture(Powerup_PassThrough, "resources/powerup_passthrough.png");
-	ResourceManager::getInstance()->LoadTexture(Powerup_PadIncrease, "resources/powerup_increase.png");
-	ResourceManager::getInstance()->LoadTexture(Powerup_Confuse, "resources/powerup_confuse.png");
-	ResourceManager::getInstance()->LoadTexture(Powerup_Chaos, "resources/powerup_chaos.png");
+	ResourceManager::getInstance()->LoadTexture("background", "asset/resources/background.jpg");
+	ResourceManager::getInstance()->LoadTexture("face", "asset/resources/awesomeface.png");
+	ResourceManager::getInstance()->LoadTexture("block", "asset/resources/block.png");
+	ResourceManager::getInstance()->LoadTexture("block_solid", "asset/resources/block_solid.png");
+	ResourceManager::getInstance()->LoadTexture("paddle", "asset/resources/paddle.png");
+	ResourceManager::getInstance()->LoadTexture("particle", "asset/resources/particle.png");
+	ResourceManager::getInstance()->LoadTexture(Powerup_Speed, "asset/resources/powerup_speed.png");
+	ResourceManager::getInstance()->LoadTexture(Powerup_Sticky, "asset/resources/powerup_sticky.png");
+	ResourceManager::getInstance()->LoadTexture(Powerup_PassThrough, "asset/resources/powerup_passthrough.png");
+	ResourceManager::getInstance()->LoadTexture(Powerup_PadIncrease, "asset/resources/powerup_increase.png");
+	ResourceManager::getInstance()->LoadTexture(Powerup_Confuse, "asset/resources/powerup_confuse.png");
+	ResourceManager::getInstance()->LoadTexture(Powerup_Chaos, "asset/resources/powerup_chaos.png");
 	
 	//加载关卡
-	GameLevel one; one.Load("levels/one.lvl", this->Width, this->Height * 0.5);
-	GameLevel two; two.Load("levels/two.lvl", this->Width, this->Height * 0.5);
-	GameLevel three; three.Load("levels/three.lvl", this->Width, this->Height * 0.5);
-	GameLevel four; four.Load("levels/four.lvl", this->Width, this->Height * 0.5);
+	GameLevel one; one.Load("asset/levels/one.lvl", this->Width, this->Height * 0.5);
+	GameLevel two; two.Load("asset/levels/two.lvl", this->Width, this->Height * 0.5);
+	GameLevel three; three.Load("asset/levels/three.lvl", this->Width, this->Height * 0.5);
+	GameLevel four; four.Load("asset/levels/four.lvl", this->Width, this->Height * 0.5);
 	this->Levels.push_back(one);
 	this->Levels.push_back(two);
 	this->Levels.push_back(three);
@@ -102,7 +102,7 @@ void Game::Init()
 	m_Effects = new PostProcessor(ResourceManager::getInstance()->GetShader("effects"), this->Width, this->Height);
 
 	m_SoundEngine = irrklang::createIrrKlangDevice();
-	m_SoundEngine->play2D("audios/breakout.mp3", true);
+	m_SoundEngine->play2D("asset/audios/breakout.mp3", true);
 }
 
 void Game::ProcessInput(float dt)
@@ -204,12 +204,12 @@ void Game::DoCollision()
 					box.Destroyed = true;
 					//随机生成道具
 					this->SpawnPowerUps(box);
-					m_SoundEngine->play2D("audios/bleep.mp3", false);
+					m_SoundEngine->play2D("asset/audios/bleep.mp3", false);
 				}
 				else {//碰撞实心砖块，激活shake效果
 					m_ShakeTime = 0.05f;
 					m_Effects->Shake = true;
-					m_SoundEngine->play2D("audios/solid.wav", false);
+					m_SoundEngine->play2D("asset/audios/solid.wav", false);
 				}
 
 				//碰撞处理
@@ -263,7 +263,7 @@ void Game::DoCollision()
 
 		//更新小球sticky状态
 		m_Ball->Stuck = m_Ball->Stick;
-		m_SoundEngine->play2D("audios/bleep.wav", false);
+		m_SoundEngine->play2D("asset/audios/bleep.wav", false);
 	}
 
 	//检查道具和底部或挡板的碰撞
@@ -277,7 +277,7 @@ void Game::DoCollision()
 				ActivatePowerUp(powerUp);
 				powerUp.Destroyed = true;
 				powerUp.Activated = true;
-				m_SoundEngine->play2D("audios/powerup.wav", false);
+				m_SoundEngine->play2D("asset/audios/powerup.wav", false);
 			}
 		}
 	}
@@ -286,16 +286,16 @@ void Game::DoCollision()
 void Game::ResetLevel()
 {
 	if (this->Level == 0) {
-		this->Levels[0].Load("levels/one.lvl", this->Width, this->Height * 0.5f);
+		this->Levels[0].Load("asset/levels/one.lvl", this->Width, this->Height * 0.5f);
 	}
 	else if (this->Level == 1) {
-		this->Levels[1].Load("levels/two.lvl", this->Width, this->Height * 0.5f);
+		this->Levels[1].Load("asset/levels/two.lvl", this->Width, this->Height * 0.5f);
 	}
 	else if (this->Level == 2) {
-		this->Levels[2].Load("levels/three.lvl", this->Width, this->Height * 0.5f);
+		this->Levels[2].Load("asset/levels/three.lvl", this->Width, this->Height * 0.5f);
 	}
 	else if (this->Level == 3) {
-		this->Levels[3].Load("levels/four.lvl", this->Width, this->Height * 0.5f);
+		this->Levels[3].Load("asset/levels/four.lvl", this->Width, this->Height * 0.5f);
 	}
 
 	//清空道具

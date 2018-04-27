@@ -52,7 +52,7 @@ Cube::Cube()
 	m_pos = glm::vec3(0.0f);
 	m_scale = glm::vec3(1.0f);
 	m_color = glm::vec3(1.0f);
-	m_texture.setID(Texture::loadTexture("resources/default.png"));
+	m_texture.setID(Texture::loadTexture("asset/resources/default.png"));
 
 	glGenVertexArrays(1, &m_VAO);
 	glGenBuffers(1, &m_VBO);

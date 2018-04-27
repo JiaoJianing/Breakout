@@ -70,12 +70,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>../glfw/include;../glad/include;../glm;../assimp/include;../freetype/include;../irrKlang/include;$(IncludePath)</IncludePath>
-    <LibraryPath>../glfw/libs;../assimp;../freetype;../irrKlang;$(LibraryPath)</LibraryPath>
+    <IncludePath>../3rdLibrary/glfw/include;../3rdLibrary/glad/include;../3rdLibrary/glm;../3rdLibrary/assimp/include;../3rdLibrary/freetype/include;../3rdLibrary/irrKlang/include;$(IncludePath)</IncludePath>
+    <LibraryPath>../3rdLibrary/glfw/libs;../3rdLibrary/assimp;../3rdLibrary/freetype;../3rdLibrary/irrKlang;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>../glfw/include;../glad/include;../glm;../assimp/include;../freetype/include;../irrKlang/include;$(IncludePath)</IncludePath>
-    <LibraryPath>../glfw/libs/release;../assimp/release;../freetype;../irrKlang;$(LibraryPath)</LibraryPath>
+    <IncludePath>../3rdLibrary/glfw/include;../3rdLibrary/glad/include;../3rdLibrary/glm;../3rdLibrary/assimp/include;../3rdLibrary/freetype/include;../3rdLibrary/irrKlang/include;$(IncludePath)</IncludePath>
+    <LibraryPath>../3rdLibrary/glfw/libs/release;../3rdLibrary/assimp/release;../3rdLibrary/freetype;../3rdLibrary/irrKlang;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
