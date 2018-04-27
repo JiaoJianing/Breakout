@@ -74,8 +74,8 @@
     <LibraryPath>../glfw/libs;../assimp;../freetype;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>../glfw/include;../glad/include;../glm;../assimp/include;$(IncludePath)</IncludePath>
-    <LibraryPath>../glfw/libs/release;../assimp/release;$(LibraryPath)</LibraryPath>
+    <IncludePath>../glfw/include;../glad/include;../glm;../assimp/include;../freetype/include;$(IncludePath)</IncludePath>
+    <LibraryPath>../glfw/libs/release;../assimp/release;../freetype;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -108,7 +108,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;assimp-vc140-mt.lib;freetyped.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
