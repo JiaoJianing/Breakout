@@ -62,5 +62,5 @@
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
 
-*.h linuist-language=c++
-*.cpp linuist-language=c++
+*.h linguist-language=c++
+*.cpp linguist-language=c++
