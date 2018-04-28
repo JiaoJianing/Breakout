@@ -15,20 +15,14 @@ struct Character {
 class Text
 {
 public:
+	Text(unsigned int width, unsigned int height);
 	~Text();
 
-	static Text* getInstance();
-	static void deleteInstance();
+	void Load();
 
-	void Draw(Shader shader, const std::wstring& text, float x, float y, float scale, glm::vec3 color);
+	void Draw(const std::wstring& text, float x, float y, float scale, glm::vec3 color);
 
 private:
-	Text();
-	Text(const Text& text);
-	Text& operator=(const Text& text);
-
-	void init();
-
 	Character loadChar(wchar_t ch);
 
 private:
@@ -37,5 +31,6 @@ private:
 	std::map<wchar_t, Character> m_Characters;
 	static Text* m_Instance;
 	unsigned int m_VAO, m_VBO;
+	Shader m_TextShader;
 };
 

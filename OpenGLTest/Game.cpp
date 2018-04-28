@@ -19,6 +19,7 @@ Game::Game(unsigned int w, unsigned int h)
 	, m_Effects(0)
 	, m_ShakeTime(0.0f)
 	, m_SoundEngine(0)
+	, m_Text(0)
 {
 }
 
@@ -48,6 +49,10 @@ Game::~Game()
 	if (m_SoundEngine != 0) {
 		m_SoundEngine->drop();
 		m_SoundEngine = 0;
+	}
+	if (m_Text != 0) {
+		delete m_Text;
+		m_Text = 0;
 	}
 }
 
@@ -103,6 +108,9 @@ void Game::Init()
 
 	m_SoundEngine = irrklang::createIrrKlangDevice();
 	m_SoundEngine->play2D("asset/audios/breakout.mp3", true);
+
+	m_Text = new Text(this->Width, this->Height);
+	m_Text->Load();
 }
 
 void Game::ProcessInput(float dt)
@@ -185,6 +193,8 @@ void Game::Render()
 				powerup.Draw(*m_SpriteRenderer);
 			}
 		}
+
+		m_Text->Draw(L"¿ªÊ¼ÓÎÏ·", this->Width / 2, this->Height / 2, 1.0f, glm::vec3(0.5f, 0.8f, 0.5f));
 
 		m_Effects->EndRender();
 

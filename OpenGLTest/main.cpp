@@ -118,7 +118,6 @@ int main(int argc, char** argv) {
 	ResourceManager::getInstance()->Clear();
 
 	ResourceManager::getInstance()->deleteInstance();
-	Text::getInstance()->deleteInstance();
 
 	glfwTerminate();
 	return 0;

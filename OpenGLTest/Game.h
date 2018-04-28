@@ -5,6 +5,7 @@
 #include "ParticleGenerator.h"
 #include "PostProcessor.h"
 #include "PowerUp.h"
+#include "Text.h"
 #include <irrKlang.h>
 #include <tuple>
 
@@ -78,6 +79,8 @@ private:
 	PostProcessor* m_Effects;
 
 	irrklang::ISoundEngine* m_SoundEngine;
+
+	Text* m_Text;
 
 	float m_ShakeTime;
 };

@@ -1,57 +1,16 @@
 #include "Text.h"
 #include <iostream>
+#include <gtc/matrix_transform.hpp>
+#include "ResourceManager.h"
 
 Text* Text::m_Instance = 0;
 
-Text::~Text()
+Text::Text(unsigned int width, unsigned int height)
 {
-	FT_Done_Face(m_Face);
-	FT_Done_FreeType(m_Ft);
-}
-
-Text* Text::getInstance()
-{
-	if (m_Instance == 0) {
-		m_Instance = new Text();
-		m_Instance->init();
-	}
-
-	return m_Instance;
-}
-
-void Text::deleteInstance()
-{
-	if (m_Instance != 0) {
-		delete m_Instance;
-		m_Instance = 0;
-	}
-}
-
-Text::Text()
-{
-
-}
-
-Text::Text(const Text& text)
-{
-
-}
-
-Text& Text::operator=(const Text& text)
-{
-	return *this;
-}
-
-void Text::init()
-{
-	if (FT_Init_FreeType(&m_Ft)) {
-		std::cout << "Failed to init FreeType Library" << std::endl;
-	}
-	if (FT_New_Face(m_Ft, "asset/fonts/HYQingTing-55J.ttf", 0, &m_Face)) {
-		std::cout << "Failed to load font" << std::endl;
-	}
-	FT_Set_Pixel_Sizes(m_Face, 0, 36);
-	FT_Select_Charmap(m_Face, FT_ENCODING_UNICODE);
+	glm::mat4 projection = glm::ortho(0.0f, float(width), float(height), 0.0f);
+	this->m_TextShader = ResourceManager::getInstance()->LoadShader("text", "asset/shaders/breakout/text.vs", "asset/shaders/breakout/text.fs");
+	this->m_TextShader.use().setInt("text", 0);
+	this->m_TextShader.setMatrix4("projection", projection);
 
 	glGenVertexArrays(1, &m_VAO);
 	glGenBuffers(1, &m_VBO);
@@ -62,6 +21,26 @@ void Text::init()
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+}
+
+Text::~Text()
+{
+	FT_Done_Face(m_Face);
+	FT_Done_FreeType(m_Ft);
+}
+
+void Text::Load()
+{
+	if (FT_Init_FreeType(&m_Ft)) {
+		std::cout << "Failed to init FreeType Library" << std::endl;
+	}
+	if (FT_New_Face(m_Ft, "asset/fonts/HYQingTing-55J.ttf", 0, &m_Face)) {
+		std::cout << "Failed to load font" << std::endl;
+	}
+	FT_Set_Pixel_Sizes(m_Face, 0, 36);
+	FT_Select_Charmap(m_Face, FT_ENCODING_UNICODE);
+
+	this->loadChar(L'H');
 }
 
 Character Text::loadChar(wchar_t ch)
@@ -91,15 +70,17 @@ Character Text::loadChar(wchar_t ch)
 			m_Face->glyph->advance.x
 		};
 		m_Characters.insert(std::pair<wchar_t, Character>(ch, character));
+		glBindTexture(GL_TEXTURE_2D, 0);
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 	}
 
 	return m_Characters[ch];
 }
 
-void Text::Draw(Shader shader, const std::wstring& text, float x, float y, float scale, glm::vec3 color)
+void Text::Draw(const std::wstring& text, float x, float y, float scale, glm::vec3 color)
 {
-	shader.setVec3("textColor", color);
+	this->m_TextShader.use();
+	this->m_TextShader.setVec3("textColor", color);
 	glActiveTexture(GL_TEXTURE0);
 	glBindVertexArray(m_VAO);
 	std::wstring::const_iterator c;
@@ -107,19 +88,19 @@ void Text::Draw(Shader shader, const std::wstring& text, float x, float y, float
 		Character ch = loadChar(*c);
 
 		float xpos = x + ch.bearing.x * scale;
-		float ypos = y - (ch.size.y - ch.bearing.y) * scale;
+		float ypos = y + (this->m_Characters[L'H'].bearing.y - ch.bearing.y) * scale;
 
 		float w = ch.size.x * scale;
 		float h = ch.size.y * scale;
 		//屏幕坐标左上角是（0,0）纹理坐标左下角是（0,0）
 		float vertices[6][4] = {
-			{ xpos, ypos + h, 0.0, 0.0 },
-		{ xpos, ypos, 0.0, 1.0 },
-		{ xpos + w, ypos, 1.0, 1.0 },
+			{ xpos, ypos + h, 0.0, 1.0 },
+			{ xpos + w, ypos, 1.0, 0.0 },
+			{ xpos, ypos, 0.0, 0.0 },
 
-		{ xpos, ypos + h, 0.0, 0.0 },
-		{ xpos + w, ypos, 1.0, 1.0 },
-		{ xpos + w, ypos + h, 1.0, 0.0 },
+			{ xpos, ypos + h, 0.0, 1.0 },
+			{ xpos + w, ypos + h, 1.0, 1.0 },
+			{ xpos + w, ypos, 1.0, 0.0 },
 		};
 		//在四边形上绘制字形纹理
 		glBindTexture(GL_TEXTURE_2D, ch.textureID);
