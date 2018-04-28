@@ -3,8 +3,6 @@
 #include <gtc/matrix_transform.hpp>
 #include "ResourceManager.h"
 
-Text* Text::m_Instance = 0;
-
 Text::Text(unsigned int width, unsigned int height)
 {
 	glm::mat4 projection = glm::ortho(0.0f, float(width), float(height), 0.0f);
@@ -29,15 +27,15 @@ Text::~Text()
 	FT_Done_FreeType(m_Ft);
 }
 
-void Text::Load()
+void Text::Load(std::string font, unsigned int fontSize)
 {
 	if (FT_Init_FreeType(&m_Ft)) {
 		std::cout << "Failed to init FreeType Library" << std::endl;
 	}
-	if (FT_New_Face(m_Ft, "asset/fonts/HYQingTing-55J.ttf", 0, &m_Face)) {
+	if (FT_New_Face(m_Ft, font.c_str(), 0, &m_Face)) {
 		std::cout << "Failed to load font" << std::endl;
 	}
-	FT_Set_Pixel_Sizes(m_Face, 0, 36);
+	FT_Set_Pixel_Sizes(m_Face, 0, fontSize);
 	FT_Select_Charmap(m_Face, FT_ENCODING_UNICODE);
 
 	this->loadChar(L'H');

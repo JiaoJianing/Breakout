@@ -2,13 +2,14 @@
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <gtc/matrix_transform.hpp>
+#include <sstream>
 #include "ResourceManager.h"
 
 Game::Game(unsigned int w, unsigned int h)
 	: Width(w)
 	, Height(h)
 	, m_SpriteRenderer(0)
-	,State(GameState::GAME_ACTIVE)
+	,State(GameState::GAME_MENU)
 	, m_PlayerSize(100.0f, 20.0f)
 	, m_PlayerVelocity(500.0f)
 	, m_Player(0)
@@ -19,7 +20,9 @@ Game::Game(unsigned int w, unsigned int h)
 	, m_Effects(0)
 	, m_ShakeTime(0.0f)
 	, m_SoundEngine(0)
-	, m_Text(0)
+	, m_NormalText(0)
+	, m_SpecialText(0)
+	, Lives(3)
 {
 }
 
@@ -50,9 +53,13 @@ Game::~Game()
 		m_SoundEngine->drop();
 		m_SoundEngine = 0;
 	}
-	if (m_Text != 0) {
-		delete m_Text;
-		m_Text = 0;
+	if (m_NormalText != 0) {
+		delete m_NormalText;
+		m_NormalText = 0;
+	}
+	if (m_SpecialText != 0) {
+		delete m_SpecialText;
+		m_SpecialText = 0;
 	}
 }
 
@@ -109,8 +116,11 @@ void Game::Init()
 	m_SoundEngine = irrklang::createIrrKlangDevice();
 	m_SoundEngine->play2D("asset/audios/breakout.mp3", true);
 
-	m_Text = new Text(this->Width, this->Height);
-	m_Text->Load();
+	m_NormalText = new Text(this->Width, this->Height);
+	m_NormalText->Load("asset/fonts/HYShuYuanHeiJ.ttf", 36);
+
+	m_SpecialText = new Text(this->Width, this->Height);
+	m_SpecialText->Load("asset/fonts/多米手写体.ttf", 36);
 }
 
 void Game::ProcessInput(float dt)
@@ -142,63 +152,124 @@ void Game::ProcessInput(float dt)
 		}
 	}
 
+	if (this->State == GameState::GAME_MENU) {
+		if (this->Keys[GLFW_KEY_SPACE] && !this->KeysProcessed[GLFW_KEY_SPACE]) {
+			this->State = GAME_ACTIVE;
+			this->KeysProcessed[GLFW_KEY_SPACE] = true;
+		}
+		if (this->Keys[GLFW_KEY_UP] && !this->KeysProcessed[GLFW_KEY_UP]) {
+			this->Level = (this->Level + 1) % 4;
+			this->KeysProcessed[GLFW_KEY_UP] = true;
+		}
+		if (this->Keys[GLFW_KEY_DOWN] && !this->KeysProcessed[GLFW_KEY_DOWN]) {
+			if (this->Level > 0) {
+				this->Level--;
+			}
+			else {
+				this->Level = 3;
+			}
+			this->KeysProcessed[GLFW_KEY_DOWN] = true;
+		}
+	}
+
+	if (this->State == GameState::GAME_WIN) {
+		if (this->Keys[GLFW_KEY_SPACE]) {
+			this->KeysProcessed[GLFW_KEY_SPACE] = true;
+			this->m_Effects->Chaos = false;
+			this->State = GameState::GAME_MENU;
+		}
+	}
 }
 
 void Game::Update(float dt)
 {
-	m_Ball->Move(dt, this->Width);
+	if (this->State == GameState::GAME_ACTIVE) {
+		m_Ball->Move(dt, this->Width);
 
-	//碰撞检测
-	DoCollision();
+		//碰撞检测
+		DoCollision();
 
-	//更新粒子
-	m_Particles->Update(dt, *m_Ball, 2, glm::vec2(m_Ball->Radius / 2));
+		//更新粒子
+		m_Particles->Update(dt, *m_Ball, 2, glm::vec2(m_Ball->Radius / 2));
 
-	this->UpdatePowerUps(dt);
+		this->UpdatePowerUps(dt);
 
-	if (m_ShakeTime > 0.0f) {
-		m_ShakeTime -= dt;
-		if (m_ShakeTime <= 0.0f) {
-			m_Effects->Shake = false;
+		if (m_ShakeTime > 0.0f) {
+			m_ShakeTime -= dt;
+			if (m_ShakeTime <= 0.0f) {
+				m_Effects->Shake = false;
+			}
 		}
-	}
 
-	//球掉下底部则重置游戏
-	if (m_Ball->Position.y >= this->Height) {
-		this->ResetLevel();
-		this->ResetPlayer();
+		//球掉下底部则重置游戏
+		if (m_Ball->Position.y >= this->Height) {
+			this->Lives--;
+
+			//生命值为0，游戏结束
+			if (this->Lives == 0) {
+				this->ResetLevel();
+				this->State = GameState::GAME_MENU;
+			}
+			this->ResetPlayer();
+		}
+
+		if (this->State == GameState::GAME_ACTIVE && this->Levels[this->Level].IsCompleted()) {
+			if (this->Level == this->Levels.size() - 1) {
+				this->ResetLevel();
+				this->ResetPlayer();
+				this->m_Effects->Chaos = true;
+				this->State = GameState::GAME_WIN;
+			}
+			else {
+				this->Level++;
+				this->ResetLevel();
+				this->ResetPlayer();
+			}
+		}
 	}
 }
 
 void Game::Render()
 {
-	if (this->State == GameState::GAME_ACTIVE) {
 		
-		m_Effects->BeginRender();
+	m_Effects->BeginRender();
 
-		//绘制背景
-		m_SpriteRenderer->DrawSprite(ResourceManager::getInstance()->GetTexture("background"), 
-			glm::vec2(0, 0), glm::vec2(this->Width, this->Height), 0.0f);
-		//绘制关卡
-		this->Levels[this->Level].Draw(*m_SpriteRenderer);
-		//绘制底部挡板
-		m_Player->Draw(*m_SpriteRenderer);
-		//绘制粒子
-		m_Particles->Draw();
-		//绘制球
-		m_Ball->Draw(*m_SpriteRenderer);
-		//绘制道具
-		for (PowerUp& powerup : this->PowerUps) {
-			if (!powerup.Destroyed) {
-				powerup.Draw(*m_SpriteRenderer);
-			}
+	//绘制背景
+	m_SpriteRenderer->DrawSprite(ResourceManager::getInstance()->GetTexture("background"), 
+		glm::vec2(0, 0), glm::vec2(this->Width, this->Height), 0.0f);
+	//绘制关卡
+	this->Levels[this->Level].Draw(*m_SpriteRenderer);
+	//绘制底部挡板
+	m_Player->Draw(*m_SpriteRenderer);
+	//绘制粒子
+	m_Particles->Draw();
+	//绘制球
+	m_Ball->Draw(*m_SpriteRenderer);
+	//绘制道具
+	for (PowerUp& powerup : this->PowerUps) {
+		if (!powerup.Destroyed) {
+			powerup.Draw(*m_SpriteRenderer);
 		}
+	}
 
-		m_Text->Draw(L"开始游戏", this->Width / 2, this->Height / 2, 1.0f, glm::vec3(0.5f, 0.8f, 0.5f));
+	m_Effects->EndRender();
 
-		m_Effects->EndRender();
+	m_Effects->Render(glfwGetTime());
 
-		m_Effects->Render(glfwGetTime());
+	std::wstringstream life; life << this->Lives;
+	std::wstringstream level; level << this->Level + 1;
+	m_NormalText->Draw(L"生命值: " + life.str(), 5.0f, 5.0f, 0.5f, glm::vec3(1.0f, 0.5f, 0.5f));
+	m_NormalText->Draw(L"当前关卡: " + level.str(), this->Width - 100.0f, 5.0f, 0.5f, glm::vec3(0.5f, 1.0f, 0.5f));
+
+	if (this->State == GameState::GAME_MENU) {
+		m_NormalText->Draw(L"SPACE 开始", 320.0f, this->Height / 2, 0.75f, glm::vec3(0.8f, 0.8f, 0.0f));
+		m_NormalText->Draw(L"UP / DOWN 选择关卡", 270.0f, this->Height / 2 + 30.0f, 0.75f, glm::vec3(0.5f, 0.5f, 1.0f));
+	}
+
+	if (this->State == GameState::GAME_WIN) {
+		m_NormalText->Draw(L"你赢了!", 350.0f, this->Height / 2, 0.75f, glm::vec3(0.8f, 0.8f, 0.0f));
+		m_NormalText->Draw(L"SPACE 重新开始", 290.0f, this->Height / 2 + 30.0f, 0.75f, glm::vec3(0.8f, 0.8f, 0.0f));
+		m_NormalText->Draw(L"ESC 退出游戏", 310.0f, this->Height / 2 + 60.0f, 0.75f, glm::vec3(0.5f, 1.0f, 0.5f));
 	}
 }
 
@@ -313,6 +384,8 @@ void Game::ResetLevel()
 	m_Effects->Chaos = false;
 	m_Effects->Shake = false;
 	m_Effects->Confuse = false;
+
+	this->Lives = 3;
 }
 
 void Game::ResetPlayer()

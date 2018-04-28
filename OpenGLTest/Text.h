@@ -18,7 +18,7 @@ public:
 	Text(unsigned int width, unsigned int height);
 	~Text();
 
-	void Load();
+	void Load(std::string font, unsigned int fontSize);
 
 	void Draw(const std::wstring& text, float x, float y, float scale, glm::vec3 color);
 
@@ -29,7 +29,6 @@ private:
 	FT_Library m_Ft;
 	FT_Face m_Face;
 	std::map<wchar_t, Character> m_Characters;
-	static Text* m_Instance;
 	unsigned int m_VAO, m_VBO;
 	Shader m_TextShader;
 };

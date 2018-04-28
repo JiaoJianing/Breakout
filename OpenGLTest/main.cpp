@@ -57,6 +57,7 @@ void key_click_callback(GLFWwindow* window, int key, int scancode, int action, i
 		}
 		else if (action == GLFW_RELEASE) {
 			breakOut.Keys[key] = false;
+			breakOut.KeysProcessed[key] = false;
 		}
 	}
 }
