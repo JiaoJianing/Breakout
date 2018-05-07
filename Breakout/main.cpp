@@ -17,25 +17,21 @@ float screenWidth = 800, screenHeight = 600;
 float deltaFrame = 0.0f;
 float lastFrame = 0.0f;
 
-Camera camera(screenWidth, screenHeight);
+Camera camera;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
+	camera.SetViewport(0, 0, width, height);
 }
 
 void mouse_move_callback(GLFWwindow* window, double xpos, double ypos) {
-	camera.OnMouseMove(xpos, ypos);
+	camera.Move2D(xpos, ypos);
 }
 
 void mouse_click_callback(GLFWwindow* window, int button, int action, int mods) {
-	if (button == GLFW_MOUSE_BUTTON_LEFT) {
-		if (action == GLFW_PRESS) {
-			camera.OnMouseDown();
-		}
-		else if (action == GLFW_RELEASE) {
-			camera.OnMouseUp();
-		}
-	}
+	double x, y;
+	glfwGetCursorPos(window, &x, &y);
+	camera.SetPos(button, action, x, y);
 }
 
 void key_click_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -50,39 +46,43 @@ void key_click_callback(GLFWwindow* window, int key, int scancode, int action, i
 		glfwSetWindowShouldClose(window, true);
 		break;
 	default:
-		camera.OnKeyboard(key);
 		break;
 	}
 }
 
 void scroll_callback(GLFWwindow* window, double xOffset, double yOffset) {
-	camera.OnMouseScroll(xOffset, yOffset);
+	if (yOffset > 0) {
+		camera.SetPos(3, GLFW_PRESS, 0, 0);
+	}
+	else {
+		camera.SetPos(4, GLFW_PRESS, 0, 0);
+	}
 }
 
 void processInput(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-		camera.OnKeyboard(GLFW_KEY_UP);
+		camera.Move(FORWARD);
 	}
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		camera.OnKeyboard(GLFW_KEY_W);
+		camera.Move(FORWARD);
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		camera.OnKeyboard(GLFW_KEY_S);
+		camera.Move(BACK);
 	}
 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-		camera.OnKeyboard(GLFW_KEY_DOWN);
+		camera.Move(BACK);
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		camera.OnKeyboard(GLFW_KEY_A);
+		camera.Move(LEFT);
 	}
 	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-		camera.OnKeyboard(GLFW_KEY_LEFT);
+		camera.Move(LEFT);
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		camera.OnKeyboard(GLFW_KEY_D);
+		camera.Move(RIGHT);
 	}
 	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-		camera.OnKeyboard(GLFW_KEY_RIGHT);
+		camera.Move(RIGHT);
 	}
 }
 
@@ -108,6 +108,12 @@ int main(int argc, char** argv) {
 	}
 
 	glViewport(0, 0, screenWidth, screenHeight);
+	camera.SetViewport(0, 0, screenWidth, screenHeight);
+	camera.SetMode(FREE);
+	camera.SetPosition(glm::vec3(0, 0, -1));
+	camera.SetLookAt(glm::vec3(0, 0, 0));
+	camera.SetClipping(.1, 1000);
+	camera.SetFOV(45);
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_move_callback);//鼠标移动
@@ -153,12 +159,10 @@ int main(int argc, char** argv) {
 #pragma region 绘制模型
 		modelShader.use();
 
-		camera.Render(currentFrame, deltaFrame);
+		camera.Update();
+		glm::mat4 view, projection, m;
+		camera.GetMatricies(projection, view, m);
 
-		glm::mat4 view;
-		view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
-		glm::mat4 projection;
-		projection = glm::perspective(glm::radians(camera.GetFov()), screenWidth / screenHeight, 1.0f, 100.0f);
 		glm::mat4 model;
 		model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f));
 		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
@@ -170,7 +174,7 @@ int main(int argc, char** argv) {
 		modelShader.setMatrix4fv("model", glm::value_ptr(model));
 		modelShader.setMatrix3fv("normalMat", glm::value_ptr(normalMat));
 
-		modelShader.setFloat3("viewPos", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
+		modelShader.setFloat3("viewPos", camera.camera_position.x, camera.camera_position.y, camera.camera_position.z);
 		modelShader.setFloat("material.shininess", 32.0f);
 
 		//平行光
@@ -191,8 +195,8 @@ int main(int argc, char** argv) {
 		}
 
 		//聚光灯
-		modelShader.setFloat3("spotLight.position", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
-		modelShader.setFloat3("spotLight.direction", camera.GetTarget().x, camera.GetTarget().y, camera.GetTarget().z);
+		modelShader.setFloat3("spotLight.position", camera.camera_position.x, camera.camera_position.y, camera.camera_position.z);
+		modelShader.setFloat3("spotLight.direction", camera.camera_direction.x, camera.camera_direction.y, camera.camera_direction.z);
 		modelShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
 		modelShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
 		modelShader.setFloat3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
