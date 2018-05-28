@@ -128,185 +128,110 @@ unsigned int loadCubeMap(std::vector<std::string> faces) {
 	return textureID;
 }
 
-glm::mat4 lightProj[3];
+glm::mat4 lightProjs[3];
 std::vector<glm::vec3> frustumVertices;
 glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
 glm::vec3 lightTarget(-1.0f, -1.0f, -1.0f);
 glm::vec3 lightUp(0.0f, 1.0f, 0.0f);
 float cascadeEnd[4];
-void calcFrustums() {
-	frustumVertices.clear();
-
-	glm::vec3 cameraPos(0.0f, 0.0f, 3.0f);
-	glm::vec3 cameraTarget(0.0f, 0.0f, -1.0f);
-	glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
-	//glm::mat4 cameraViewMat = glm::lookAt(cameraPos, cameraPos + cameraTarget, cameraUp);
-	glm::mat4 cameraViewMat = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
-	glm::mat4 cameraInvViewMat = glm::inverse(cameraViewMat);
-
-	glm::mat4 lightViewMat = glm::lookAt(lightPos, lightPos + lightTarget, lightUp);
-
-
-	float ar = screenHeight / (float)screenWidth;
-	float fov = 45.0f;
-	float tanHalfHFov = tanf(glm::radians(fov / 2.0f));
-	float tanHalfVFov = tanf(glm::radians(fov * ar / 2.0f));
-
-	cascadeEnd[0] = -1.0f;
-	cascadeEnd[1] = -25.0f;
-	cascadeEnd[2] = -90.0f;
-	cascadeEnd[3] = -200.0f;
-
-	for (int i = 0; i < 3; i++) {
-		float xn = cascadeEnd[i] * tanHalfHFov;
-		float xf = cascadeEnd[i + 1] * tanHalfHFov;
-		float yn = cascadeEnd[i] * tanHalfVFov;
-		float yf = cascadeEnd[i + 1] * tanHalfVFov;
-
-		glm::vec4 frustumCorners[8] = {
-			// near face
-			glm::vec4(xn,   yn, cascadeEnd[i], 1.0), //right top
-			glm::vec4(-xn,  yn, cascadeEnd[i], 1.0), //left top
-			glm::vec4(xn,  -yn, cascadeEnd[i], 1.0), // right bottom
-			glm::vec4(-xn, -yn, cascadeEnd[i], 1.0), // left bottom
-
-			// far face
-			glm::vec4(xf,   yf, cascadeEnd[i + 1], 1.0),
-			glm::vec4(-xf,  yf, cascadeEnd[i + 1], 1.0),
-			glm::vec4(xf,  -yf, cascadeEnd[i + 1], 1.0),
-			glm::vec4(-xf, -yf, cascadeEnd[i + 1], 1.0)
-		};
-
-		glm::vec4 frustumCornersL[8];
-
-		float minX = std::numeric_limits<float>::max();
-		float maxX = std::numeric_limits<float>::min();
-		float minY = std::numeric_limits<float>::max();
-		float maxY = std::numeric_limits<float>::min();
-		float minZ = std::numeric_limits<float>::max();
-		float maxZ = std::numeric_limits<float>::min();
-
-		glm::vec3 lightCenter = glm::vec3(0.0f);
-		for (unsigned int j = 0; j < 8; j++) {
-			//frustumCorners[j] = cameraInvViewMat * frustumCorners[j];
-			glm::vec4 vW = cameraInvViewMat * frustumCorners[j];
-			lightCenter += glm::vec3(vW);
-
-			frustumCornersL[j] = lightViewMat * vW;
-
-			minX = __min(minX, frustumCornersL[j].x);
-			maxX = __max(maxX, frustumCornersL[j].x);
-			minY = __min(minY, frustumCornersL[j].y);
-			maxY = __max(maxY, frustumCornersL[j].y);
-			minZ = __min(minZ, frustumCornersL[j].z);
-			maxZ = __max(maxZ, frustumCornersL[j].z);
-		}
-		lightCenter = lightCenter / 8.0f;
-		glm::mat4 lightView = glm::lookAt(lightCenter, lightCenter + lightTarget, lightUp);
-
-		lightProj[i] = glm::ortho(minX, maxX, minY, maxY, minZ, maxZ) * lightView;
-
-		/*frustumVertices.push_back(frustumCorners[1]);
-		frustumVertices.push_back(frustumCorners[5]);
-		frustumVertices.push_back(frustumCorners[7]);
-
-		frustumVertices.push_back(frustumCorners[1]);
-		frustumVertices.push_back(frustumCorners[7]);
-		frustumVertices.push_back(frustumCorners[3]);
-
-		frustumVertices.push_back(frustumCorners[0]);
-		frustumVertices.push_back(frustumCorners[4]);
-		frustumVertices.push_back(frustumCorners[5]);
-
-		frustumVertices.push_back(frustumCorners[0]);
-		frustumVertices.push_back(frustumCorners[5]);
-		frustumVertices.push_back(frustumCorners[1]);
-
-		frustumVertices.push_back(frustumCorners[0]);
-		frustumVertices.push_back(frustumCorners[2]);
-		frustumVertices.push_back(frustumCorners[6]);
-
-		frustumVertices.push_back(frustumCorners[0]);
-		frustumVertices.push_back(frustumCorners[6]);
-		frustumVertices.push_back(frustumCorners[4]);
-
-		frustumVertices.push_back(frustumCorners[3]);
-		frustumVertices.push_back(frustumCorners[7]);
-		frustumVertices.push_back(frustumCorners[6]);
-
-		frustumVertices.push_back(frustumCorners[3]);
-		frustumVertices.push_back(frustumCorners[6]);
-		frustumVertices.push_back(frustumCorners[2]);*/
-
-		glm::vec3 righttopNear(maxX, maxY, minZ);
-		glm::vec3 lefttopNear(minX, maxY, minZ);
-		glm::vec3 rightbottomNear(maxX, minY, minZ);
-		glm::vec3 leftbottomNear(minX, minY, minZ);
-		glm::vec3 righttopFar(maxX, maxY, maxZ);
-		glm::vec3 lefttopFar(minX, maxY, maxZ);
-		glm::vec3 rightbottomFar(maxX, minY, maxZ);
-		glm::vec3 leftbottomFar(minX, minY, maxZ);
-
-		frustumVertices.push_back(lefttopNear);
-		frustumVertices.push_back(lefttopFar);
-		frustumVertices.push_back(leftbottomFar);
-
-		frustumVertices.push_back(lefttopNear);
-		frustumVertices.push_back(leftbottomFar);
-		frustumVertices.push_back(leftbottomNear);
-
-		frustumVertices.push_back(righttopNear);
-		frustumVertices.push_back(righttopFar);
-		frustumVertices.push_back(lefttopFar);
-
-		frustumVertices.push_back(righttopNear);
-		frustumVertices.push_back(lefttopFar);
-		frustumVertices.push_back(lefttopNear);
-
-		frustumVertices.push_back(righttopNear);
-		frustumVertices.push_back(rightbottomNear);
-		frustumVertices.push_back(rightbottomFar);
-
-		frustumVertices.push_back(righttopNear);
-		frustumVertices.push_back(rightbottomFar);
-		frustumVertices.push_back(righttopFar);
-
-		frustumVertices.push_back(leftbottomNear);
-		frustumVertices.push_back(leftbottomFar);
-		frustumVertices.push_back(rightbottomFar);
-
-		frustumVertices.push_back(leftbottomNear);
-		frustumVertices.push_back(rightbottomFar);
-		frustumVertices.push_back(rightbottomNear);
-	}
-}
+float cascadeEndClipSpace[3];
 
 void calcFrustums2() {
 	frustumVertices.clear();
-	glm::vec3 cameraPos(0.0f, 0.0f, 3.0f);
+	glm::vec3 cameraPos(0.0f, 30.0f, 3.0f);
 	glm::vec3 cameraTarget(0.0f, 0.0f, -1.0f);
 	glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
-	glm::mat4 cameraView = glm::lookAt(cameraPos, cameraPos + cameraTarget, cameraUp);
-	glm::mat4 cameraProj = glm::perspective(45.0f, screenWidth / (float)screenHeight, 0.1f, 200.0f);
+	//glm::mat4 cameraView = glm::lookAt(cameraPos, cameraPos + cameraTarget, cameraUp);
+	glm::mat4 cameraView = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
 
-	glm::mat4 cameraViewProj = cameraProj * cameraView;
-	glm::mat4 cameraInvViewProj = glm::inverse(cameraViewProj);
+	glm::mat4 cameraProjs[3];
+	cameraProjs[0] = glm::perspective(45.0f, screenWidth / (float)screenHeight, 0.1f, 50.0f);
+	cameraProjs[1] = glm::perspective(45.0f, screenWidth / (float)screenHeight, 45.0f, 120.0f);
+	cameraProjs[2] = glm::perspective(45.0f, screenWidth / (float)screenHeight, 115.0f, 400.0f);
 
-	glm::vec4 ndcCoords[8] = {
-		glm::vec4(1.0f, 1.0f, -1.0f, 1.0f),
-		glm::vec4(-1.0f, 1.0f, -1.0f, 1.0f),
-		glm::vec4(-1.0f, -1.0f, -1.0f, 1.0f),
-		glm::vec4(1.0f, -1.0f, -1.0f, 1.0f),
-		glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
-		glm::vec4(-1.0f, 1.0f, 1.0f, 1.0f),
-		glm::vec4(-1.0f, -1.0f, 1.0f, 1.0f),
-		glm::vec4(1.0f, -1.0f, 1.0f, 1.0f),
-	};
+	for (int k = 0; k < 3; k++) {
+		glm::mat4 cameraViewProj = cameraProjs[k] * cameraView;
+		glm::mat4 cameraInvViewProj = glm::inverse(cameraViewProj);
 
-	for (int i = 0; i < 8; i++) {
-		glm::vec4 corner = cameraInvViewProj * ndcCoords[i];
-		corner = corner * corner.w;
-		int a = 0;
+		glm::vec4 ndcCoords[8] = {
+			glm::vec4(1.0f, 1.0f, -1.0f, 1.0f), //top right near
+			glm::vec4(-1.0f, 1.0f, -1.0f, 1.0f), //top left near
+			glm::vec4(-1.0f, -1.0f, -1.0f, 1.0f), //bottom left near
+			glm::vec4(1.0f, -1.0f, -1.0f, 1.0f), //bottom right near
+			glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
+			glm::vec4(-1.0f, 1.0f, 1.0f, 1.0f),
+			glm::vec4(-1.0f, -1.0f, 1.0f, 1.0f),
+			glm::vec4(1.0f, -1.0f, 1.0f, 1.0f),
+		};
+
+		glm::vec3 corners[8];
+		for (int i = 0; i < 8; i++) {
+			glm::vec4 corner = cameraInvViewProj * ndcCoords[i];
+			corner.w = 1.0f / corner.w;
+			corner.x *= corner.w;
+			corner.y *= corner.w;
+			corner.z *= corner.w;
+			corners[i] = corner;
+		}
+
+		glm::vec3 frustumCenter;
+		for (int j = 0; j < 8; j++) {
+			frustumCenter = frustumCenter + corners[j];
+		}
+		frustumCenter = frustumCenter * (1.0f / 8.0f);
+
+		float radius = glm::length(corners[1] - corners[7]) / 2.0f;
+		float texelsPerUnit = 1024.0f / (radius * 2.0f);
+		glm::mat4 matScale;
+		matScale = glm::scale(matScale, glm::vec3(texelsPerUnit));
+		glm::mat4 matView = glm::lookAt(-lightTarget, lightPos, lightUp);
+		matView *= matScale;
+		glm::mat4 matInvView = glm::inverse(matView);
+
+		frustumCenter = matView * glm::vec4(frustumCenter, 1.0f);
+		frustumCenter.x = (float)floor(frustumCenter.x);
+		frustumCenter.y = (float)floor(frustumCenter.y);
+		frustumCenter = matInvView * glm::vec4(frustumCenter, 1.0f);
+
+		glm::vec3 eye = frustumCenter - (lightTarget * radius * 2.0f);
+		glm::mat4 lookat = glm::lookAt(eye, frustumCenter, lightUp);
+		glm::mat4 proj = glm::ortho(-radius, radius, -radius, radius, -radius * 6.0f, radius *6.0f);
+		
+		lightProjs[k] = proj * lookat;
+
+		cascadeEndClipSpace[k] = radius * 2.0f;
+
+		frustumVertices.push_back(corners[0]);
+		frustumVertices.push_back(corners[1]);
+		frustumVertices.push_back(corners[4]);
+
+		frustumVertices.push_back(corners[1]);
+		frustumVertices.push_back(corners[5]);
+		frustumVertices.push_back(corners[4]);
+
+		frustumVertices.push_back(corners[0]);
+		frustumVertices.push_back(corners[3]);
+		frustumVertices.push_back(corners[7]);
+
+		frustumVertices.push_back(corners[0]);
+		frustumVertices.push_back(corners[7]);
+		frustumVertices.push_back(corners[4]);
+
+		frustumVertices.push_back(corners[2]);
+		frustumVertices.push_back(corners[6]);
+		frustumVertices.push_back(corners[3]);
+
+		frustumVertices.push_back(corners[3]);
+		frustumVertices.push_back(corners[6]);
+		frustumVertices.push_back(corners[7]);
+
+		frustumVertices.push_back(corners[1]);
+		frustumVertices.push_back(corners[5]);
+		frustumVertices.push_back(corners[6]);
+
+		frustumVertices.push_back(corners[1]);
+		frustumVertices.push_back(corners[6]);
+		frustumVertices.push_back(corners[2]);
 	}
 }
 
@@ -373,14 +298,7 @@ int main(int argc, char** argv) {
 	shaderTerrain.setInt("texture_shadow[0]", 3);
 	shaderTerrain.setInt("texture_shadow[1]", 4);
 	shaderTerrain.setInt("texture_shadow[2]", 5);
-
-	float cascadeEndClipSpace[3];
-	for (unsigned int i = 0; i < 3; i++) {
-		glm::mat4 Proj = glm::perspective(camera.GetFov(), screenWidth / screenHeight, 0.1f, 200.0f);
-		glm::vec4 vView(0.0f, 0.0f, cascadeEnd[i + 1], 1.0f);
-		glm::vec4 vClip = Proj * vView;
-		cascadeEndClipSpace[i] = vClip.z;
-	}
+	shaderTerrain.setVec3("lightDirection", -lightTarget);
 
 #pragma region shadow FBO
 	unsigned int shadowFBO;
@@ -428,13 +346,11 @@ int main(int argc, char** argv) {
 
 		processInput(window);
 		camera.Update(currentFrame, deltaFrame);
-		calcFrustums();
+		calcFrustums2();
 
 		glm::mat4 model;
 		glm::mat4 view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
 		glm::mat4 projection = glm::perspective(camera.GetFov(), screenWidth / screenHeight, 0.1f, 1000.0f);
-
-		glm::mat4 lightViewMat = glm::lookAt(lightPos, lightPos + lightTarget, lightUp);
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
@@ -445,7 +361,7 @@ int main(int argc, char** argv) {
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowTexture[i], 0);
 			glClear(GL_DEPTH_BUFFER_BIT);
 			//shaderCSM.setMatrix4("view", lightViewMat);
-			shaderCSM.setMatrix4("projection", lightProj[i]);
+			shaderCSM.setMatrix4("projection", lightProjs[i]);
 			terrain.Render(shaderCSM);
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -461,9 +377,9 @@ int main(int argc, char** argv) {
 		glBindTexture(GL_TEXTURE_2D, shadowTexture[2]);
 		shaderTerrain.setMatrix4("view", view);
 		shaderTerrain.setMatrix4("projection", projection);
-		shaderTerrain.setMatrix4("lightMVP[0]", lightProj[0]);
-		shaderTerrain.setMatrix4("lightMVP[1]", lightProj[1]);
-		shaderTerrain.setMatrix4("lightMVP[2]", lightProj[2]);
+		shaderTerrain.setMatrix4("lightMVP[0]", lightProjs[0]);
+		shaderTerrain.setMatrix4("lightMVP[1]", lightProjs[1]);
+		shaderTerrain.setMatrix4("lightMVP[2]", lightProjs[2]);
 		shaderTerrain.setFloat("cascadeEndClipSpace[0]", cascadeEndClipSpace[0]);
 		shaderTerrain.setFloat("cascadeEndClipSpace[1]", cascadeEndClipSpace[1]);
 		shaderTerrain.setFloat("cascadeEndClipSpace[2]", cascadeEndClipSpace[2]);

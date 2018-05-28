@@ -13,6 +13,7 @@ out vec3 localNormal;
 
 out vec4 lightSpacePos[3];
 out float clipSpacePosZ;
+out vec3 worldNormal;
 
 void main()						
 {							
@@ -21,6 +22,7 @@ void main()
 	texCoord = aTexCoord;
 	fragPos = aPos;
 	localNormal = aNormal;
+	worldNormal = normalize(aNormal);
 
 	for (int i=0; i<3; i++){
 		lightSpacePos[i] = lightMVP[i] * pos;
