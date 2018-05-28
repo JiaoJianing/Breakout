@@ -129,15 +129,13 @@ unsigned int loadCubeMap(std::vector<std::string> faces) {
 }
 
 glm::mat4 lightProjs[3];
-std::vector<glm::vec3> frustumVertices;
 glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
-glm::vec3 lightTarget(-1.0f, -1.0f, -1.0f);
+//glm::vec3 lightDirection = glm::normalize(glm::vec3(-1.0f, -1.0f, -1.0f));
+glm::vec3 lightDirection(-1.0f, -1.0f, -1.0f);
 glm::vec3 lightUp(0.0f, 1.0f, 0.0f);
-float cascadeEnd[4];
 float cascadeEndClipSpace[3];
 
 void calcFrustums2() {
-	frustumVertices.clear();
 	glm::vec3 cameraPos(0.0f, 30.0f, 3.0f);
 	glm::vec3 cameraTarget(0.0f, 0.0f, -1.0f);
 	glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
@@ -145,9 +143,9 @@ void calcFrustums2() {
 	glm::mat4 cameraView = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetTarget(), camera.GetUp());
 
 	glm::mat4 cameraProjs[3];
-	cameraProjs[0] = glm::perspective(45.0f, screenWidth / (float)screenHeight, 0.1f, 50.0f);
-	cameraProjs[1] = glm::perspective(45.0f, screenWidth / (float)screenHeight, 45.0f, 120.0f);
-	cameraProjs[2] = glm::perspective(45.0f, screenWidth / (float)screenHeight, 115.0f, 400.0f);
+	cameraProjs[0] = glm::perspective(45.0f, screenWidth / (float)screenHeight, 0.1f, 30.0f);
+	cameraProjs[1] = glm::perspective(45.0f, screenWidth / (float)screenHeight, 25.0f, 80.0f);
+	cameraProjs[2] = glm::perspective(45.0f, screenWidth / (float)screenHeight, 75.0f, 400.0f);
 
 	for (int k = 0; k < 3; k++) {
 		glm::mat4 cameraViewProj = cameraProjs[k] * cameraView;
@@ -184,7 +182,7 @@ void calcFrustums2() {
 		float texelsPerUnit = 1024.0f / (radius * 2.0f);
 		glm::mat4 matScale;
 		matScale = glm::scale(matScale, glm::vec3(texelsPerUnit));
-		glm::mat4 matView = glm::lookAt(-lightTarget, lightPos, lightUp);
+		glm::mat4 matView = glm::lookAt(-lightDirection, lightPos, lightUp);
 		matView *= matScale;
 		glm::mat4 matInvView = glm::inverse(matView);
 
@@ -193,45 +191,12 @@ void calcFrustums2() {
 		frustumCenter.y = (float)floor(frustumCenter.y);
 		frustumCenter = matInvView * glm::vec4(frustumCenter, 1.0f);
 
-		glm::vec3 eye = frustumCenter - (lightTarget * radius * 2.0f);
+		glm::vec3 eye = frustumCenter - (lightDirection * radius * 2.0f);
 		glm::mat4 lookat = glm::lookAt(eye, frustumCenter, lightUp);
-		glm::mat4 proj = glm::ortho(-radius, radius, -radius, radius, -radius * 6.0f, radius *6.0f);
+		glm::mat4 proj = glm::ortho(-radius, radius, -radius, radius, -6*radius, 6*radius);
 		
 		lightProjs[k] = proj * lookat;
-
 		cascadeEndClipSpace[k] = radius * 2.0f;
-
-		frustumVertices.push_back(corners[0]);
-		frustumVertices.push_back(corners[1]);
-		frustumVertices.push_back(corners[4]);
-
-		frustumVertices.push_back(corners[1]);
-		frustumVertices.push_back(corners[5]);
-		frustumVertices.push_back(corners[4]);
-
-		frustumVertices.push_back(corners[0]);
-		frustumVertices.push_back(corners[3]);
-		frustumVertices.push_back(corners[7]);
-
-		frustumVertices.push_back(corners[0]);
-		frustumVertices.push_back(corners[7]);
-		frustumVertices.push_back(corners[4]);
-
-		frustumVertices.push_back(corners[2]);
-		frustumVertices.push_back(corners[6]);
-		frustumVertices.push_back(corners[3]);
-
-		frustumVertices.push_back(corners[3]);
-		frustumVertices.push_back(corners[6]);
-		frustumVertices.push_back(corners[7]);
-
-		frustumVertices.push_back(corners[1]);
-		frustumVertices.push_back(corners[5]);
-		frustumVertices.push_back(corners[6]);
-
-		frustumVertices.push_back(corners[1]);
-		frustumVertices.push_back(corners[6]);
-		frustumVertices.push_back(corners[2]);
 	}
 }
 
@@ -266,20 +231,6 @@ int main(int argc, char** argv) {
 	glfwSetKeyCallback(window, key_click_callback);//¼üÅÌ°´ÏÂ
 	glfwSetScrollCallback(window, scroll_callback);//Êó±ê¹öÂÖ
 
-#pragma region render frustum
-	Shader shaderFrustum("shaders/deferred_rendering/frustum.vs", "shaders/deferred_rendering/frustum.fs");
-	unsigned int VAO;
-	unsigned int VBO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, frustumVertices.size() * sizeof(glm::vec3), 0, GL_DYNAMIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
-	glBindVertexArray(0);
-#pragma endregion
-
 #pragma region shadow texture
 	Shader shaderShadow("shaders/deferred_rendering/rendershadow.vs", "shaders/deferred_rendering/rendershadow.fs");
 	shaderShadow.use();
@@ -298,7 +249,13 @@ int main(int argc, char** argv) {
 	shaderTerrain.setInt("texture_shadow[0]", 3);
 	shaderTerrain.setInt("texture_shadow[1]", 4);
 	shaderTerrain.setInt("texture_shadow[2]", 5);
-	shaderTerrain.setVec3("lightDirection", -lightTarget);
+
+	Model nanosuit("models/nanosuit/nanosuit.obj");
+	Shader shaderNanosuit("shaders/deferred_rendering/model.vs", "shaders/deferred_rendering/model.fs");
+	shaderNanosuit.use();
+	shaderNanosuit.setInt("texture_shadow[0]", 4);
+	shaderNanosuit.setInt("texture_shadow[1]", 5);
+	shaderNanosuit.setInt("texture_shadow[2]", 6);
 
 #pragma region shadow FBO
 	unsigned int shadowFBO;
@@ -307,12 +264,13 @@ int main(int argc, char** argv) {
 	glGenTextures(3, shadowTexture);
 	for (unsigned int i = 0; i < 3; i++) {
 		glBindTexture(GL_TEXTURE_2D, shadowTexture[i]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, screenWidth, screenHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, screenWidth, screenHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowTexture[0], 0);
@@ -360,14 +318,43 @@ int main(int argc, char** argv) {
 		for (int i = 0; i < 3; i++) {
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowTexture[i], 0);
 			glClear(GL_DEPTH_BUFFER_BIT);
-			//shaderCSM.setMatrix4("view", lightViewMat);
 			shaderCSM.setMatrix4("projection", lightProjs[i]);
+			model = glm::mat4();
+			model = glm::translate(model, glm::vec3(-5, 23, 0));
+			model = glm::scale(model, glm::vec3(0.2f));
+			shaderCSM.setMatrix4("model", model);
+			nanosuit.Draw(shaderCSM);
+
+			model = glm::mat4();
+			shaderCSM.setMatrix4("model", model);
 			terrain.Render(shaderCSM);
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 #pragma endregion
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		shaderNanosuit.use();
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, shadowTexture[0]);
+		glActiveTexture(GL_TEXTURE5);
+		glBindTexture(GL_TEXTURE_2D, shadowTexture[1]);
+		glActiveTexture(GL_TEXTURE6);
+		glBindTexture(GL_TEXTURE_2D, shadowTexture[2]);
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(-5, 23, 0));
+		model = glm::scale(model, glm::vec3(0.2f));
+		shaderNanosuit.setMatrix4("model", model);
+		shaderNanosuit.setMatrix4("view", view);
+		shaderNanosuit.setMatrix4("projection", projection);
+		shaderNanosuit.setMatrix4("lightMVP[0]", lightProjs[0]);
+		shaderNanosuit.setMatrix4("lightMVP[1]", lightProjs[1]);
+		shaderNanosuit.setMatrix4("lightMVP[2]", lightProjs[2]);
+		shaderNanosuit.setFloat("cascadeEndClipSpace[0]", cascadeEndClipSpace[0]);
+		shaderNanosuit.setFloat("cascadeEndClipSpace[1]", cascadeEndClipSpace[1]);
+		shaderNanosuit.setFloat("cascadeEndClipSpace[2]", cascadeEndClipSpace[2]);
+		shaderNanosuit.setVec3("lightDirection", -lightDirection);
+		nanosuit.Draw(shaderNanosuit);
+
 		shaderTerrain.use();
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, shadowTexture[0]);
@@ -383,6 +370,7 @@ int main(int argc, char** argv) {
 		shaderTerrain.setFloat("cascadeEndClipSpace[0]", cascadeEndClipSpace[0]);
 		shaderTerrain.setFloat("cascadeEndClipSpace[1]", cascadeEndClipSpace[1]);
 		shaderTerrain.setFloat("cascadeEndClipSpace[2]", cascadeEndClipSpace[2]);
+		shaderTerrain.setVec3("lightDirection", -lightDirection);
 		terrain.Render(shaderTerrain);
 		
 		shaderShadow.use();
@@ -393,16 +381,9 @@ int main(int argc, char** argv) {
 			shadowQuad.Draw(shaderShadow);
 		}
 
-#pragma region render frustum
-		//shaderFrustum.use();
-		//shaderFrustum.setMatrix4("view", view);
-		//shaderFrustum.setMatrix4("projection", projection);
-		//glBindVertexArray(VAO);
-		//glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		//glBufferData(GL_ARRAY_BUFFER, frustumVertices.size() * sizeof(glm::vec3), &frustumVertices[0], GL_DYNAMIC_DRAW);
-		//glDrawArrays(GL_TRIANGLES, 0, frustumVertices.size());
-		//glBindVertexArray(0);
-#pragma endregion
+		glm::mat4 rotateMat;
+		rotateMat = glm::rotate(rotateMat, glm::radians(currentFrame * 0.01f), glm::vec3(0, 1, 0));
+		//lightTarget = rotateMat * glm::vec4(lightTarget, 1.0);
 
 		glfwSwapBuffers(window);
 	}
