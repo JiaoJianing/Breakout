@@ -17,7 +17,7 @@ Camera::Camera(float windowWidth, float windowHeight)
 	m_mouseX = m_mouseY = 0;
 	m_firstMouse = true;
 	m_mouseSensitivity = 5;
-	m_keySensitivity = 5;
+	m_keySensitivity = 100;
 	m_mousePress = false;
 	m_windowWidth = windowWidth;
 	m_windowHeight = windowHeight;
