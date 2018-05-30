@@ -16,6 +16,7 @@
 #include "Cube.h"
 #include "Quad.h"
 #include "Terrain.h"
+#include "AnimationModel.h"
 
 float screenWidth = 1024, screenHeight = 1024;
 
@@ -250,6 +251,14 @@ int main(int argc, char** argv) {
 	shaderTerrain.setInt("texture_shadow[1]", 4);
 	shaderTerrain.setInt("texture_shadow[2]", 5);
 
+	//AnimationModel boblampclean("models/boblampclean/boblampclean.md5mesh");
+	AnimationModel boblampclean("models/ninja/dwarf.x");
+	Shader shaderBoblamp("shaders/deferred_rendering/animation_model.vs", "shaders/deferred_rendering/animation_model.fs");
+	shaderBoblamp.use();
+	shaderBoblamp.setInt("texture_shadow[0]", 4);
+	shaderBoblamp.setInt("texture_shadow[1]", 5);
+	shaderBoblamp.setInt("texture_shadow[2]", 6);
+
 	Model nanosuit("models/nanosuit/nanosuit.obj");
 	Shader shaderNanosuit("shaders/deferred_rendering/model.vs", "shaders/deferred_rendering/model.fs");
 	shaderNanosuit.use();
@@ -285,6 +294,7 @@ int main(int argc, char** argv) {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	Shader shaderCSM("shaders/deferred_rendering/csm.vs", "shaders/deferred_rendering/csm.fs");
+	Shader shaderCSM_Animation("shaders/deferred_rendering/animation_csm.vs", "shaders/deferred_rendering/animation_csm.fs");
 #pragma endregion
 
 	while (!glfwWindowShouldClose(window))
@@ -312,6 +322,9 @@ int main(int argc, char** argv) {
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
+		std::vector<glm::mat4> Transforms;
+		boblampclean.BoneTransform(currentFrame, Transforms);
+
 #pragma region render shadow pass
 		glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
 		shaderCSM.use();
@@ -328,6 +341,18 @@ int main(int argc, char** argv) {
 			model = glm::mat4();
 			shaderCSM.setMatrix4("model", model);
 			terrain.Render(shaderCSM);
+
+			shaderCSM_Animation.use();
+			shaderCSM_Animation.setMatrix4("projection", lightProjs[i]);
+			model = glm::mat4();
+			model = glm::translate(model, glm::vec3(0, 25, 0));
+			//model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1, 0, 0));
+			model = glm::scale(model, glm::vec3(0.05f));
+			shaderCSM_Animation.setMatrix4("model", model);		
+			for (unsigned i = 0; i < Transforms.size(); i++) {
+				shaderCSM_Animation.setMatrix4("gBones[" + std::to_string(i) + "]", Transforms[i]);
+			}
+			boblampclean.Draw(shaderCSM_Animation);
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 #pragma endregion
@@ -354,6 +379,28 @@ int main(int argc, char** argv) {
 		shaderNanosuit.setFloat("cascadeEndClipSpace[2]", cascadeEndClipSpace[2]);
 		shaderNanosuit.setVec3("lightDirection", -lightDirection);
 		nanosuit.Draw(shaderNanosuit);
+
+		shaderBoblamp.use();
+		model = glm::mat4();
+		model = glm::translate(model, glm::vec3(0, 25, 0));
+		//model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1, 0, 0));
+		model = glm::scale(model, glm::vec3(0.05f));		
+		shaderBoblamp.setMatrix4("model", model);
+		shaderBoblamp.setMatrix4("view", view);
+		shaderBoblamp.setMatrix4("projection", projection);
+		shaderBoblamp.setMatrix4("lightMVP[0]", lightProjs[0]);
+		shaderBoblamp.setMatrix4("lightMVP[1]", lightProjs[1]);
+		shaderBoblamp.setMatrix4("lightMVP[2]", lightProjs[2]);
+		shaderBoblamp.setFloat("cascadeEndClipSpace[0]", cascadeEndClipSpace[0]);
+		shaderBoblamp.setFloat("cascadeEndClipSpace[1]", cascadeEndClipSpace[1]);
+		shaderBoblamp.setFloat("cascadeEndClipSpace[2]", cascadeEndClipSpace[2]);
+		shaderBoblamp.setVec3("lightDirection", -lightDirection);
+
+		for (unsigned i = 0; i < Transforms.size(); i++) {
+			shaderBoblamp.setMatrix4("gBones[" + std::to_string(i) + "]", Transforms[i]);
+		}
+
+		boblampclean.Draw(shaderBoblamp);
 
 		shaderTerrain.use();
 		glActiveTexture(GL_TEXTURE3);
