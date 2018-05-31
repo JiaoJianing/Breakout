@@ -252,7 +252,7 @@ int main(int argc, char** argv) {
 	shaderTerrain.setInt("texture_shadow[2]", 5);
 
 	//AnimationModel boblampclean("models/boblampclean/boblampclean.md5mesh");
-	AnimationModel boblampclean("models/test/test.dae");
+	AnimationModel boblampclean("models/aatrox/aatrox.dae");
 	Shader shaderBoblamp("shaders/deferred_rendering/animation_model.vs", "shaders/deferred_rendering/animation_model.fs");
 	shaderBoblamp.use();
 	shaderBoblamp.setInt("texture_shadow[0]", 4);
@@ -345,7 +345,7 @@ int main(int argc, char** argv) {
 			shaderCSM_Animation.use();
 			shaderCSM_Animation.setMatrix4("projection", lightProjs[i]);
 			model = glm::mat4();
-			model = glm::translate(model, glm::vec3(0, 27, 0));
+			model = glm::translate(model, glm::vec3(0, 25, 0));
 			model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1, 0, 0));
 			model = glm::scale(model, glm::vec3(1.0f));
 			shaderCSM_Animation.setMatrix4("model", model);		
@@ -382,7 +382,7 @@ int main(int argc, char** argv) {
 
 		shaderBoblamp.use();
 		model = glm::mat4();
-		model = glm::translate(model, glm::vec3(0, 27, 0));
+		model = glm::translate(model, glm::vec3(0, 25, 0));
 		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1, 0, 0));
 		model = glm::scale(model, glm::vec3(1.0f));		
 		shaderBoblamp.setMatrix4("model", model);
