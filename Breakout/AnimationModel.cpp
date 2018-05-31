@@ -108,7 +108,7 @@ void AnimationModel::CalcInterpolatedScaling(aiVector3D& Out, float AnimationTim
 	assert(NextScalingIndex < pNodeAnim->mNumScalingKeys);
 	float DeltaTime = (float)(pNodeAnim->mScalingKeys[NextScalingIndex].mTime - pNodeAnim->mScalingKeys[ScalingIndex].mTime);
 	float Factor = (AnimationTime - (float)pNodeAnim->mScalingKeys[ScalingIndex].mTime) / DeltaTime;
-	assert(Factor >= 0.0f && Factor <= 1.0f);
+	//assert(Factor >= 0.0f && Factor <= 1.0f);
 	const aiVector3D& Start = pNodeAnim->mScalingKeys[ScalingIndex].mValue;
 	const aiVector3D& End = pNodeAnim->mScalingKeys[NextScalingIndex].mValue;
 	aiVector3D Delta = End - Start;
@@ -164,7 +164,7 @@ unsigned int AnimationModel::FindScaling(float AnimationTime, const aiNodeAnim* 
 		}
 	}
 
-	assert(0);
+	//assert(0);
 
 	return 0;
 }
@@ -179,7 +179,7 @@ unsigned int AnimationModel::FindRotation(float AnimationTime, const aiNodeAnim*
 		}
 	}
 
-	assert(0);
+	//assert(0);
 
 	return 0;
 }
@@ -192,7 +192,7 @@ unsigned int AnimationModel::FindPosition(float AnimationTime, const aiNodeAnim*
 		}
 	}
 
-	assert(0);
+	//assert(0);
 
 	return 0;
 }
@@ -216,7 +216,7 @@ void AnimationModel::loadModel(std::string path)
 
 	if (!m_Scene || m_Scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !m_Scene->mRootNode) {
 		std::cout << "Assimp load failed: " << m_Importer.GetErrorString() << std::endl;
-		return;
+	return;
 	}
 	m_GlobalInverseTransform = aiMat2GlmMat(m_Scene->mRootNode->mTransformation);
 	m_GlobalInverseTransform = glm::inverse(m_GlobalInverseTransform);
