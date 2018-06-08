@@ -18,6 +18,7 @@
 #include "Terrain.h"
 #include "AnimationModel.h"
 #include "Water.h"
+#include "Sphere.h"
 
 float screenWidth = 1024, screenHeight = 1024;
 
@@ -128,6 +129,27 @@ unsigned int loadCubeMap(std::vector<std::string> faces) {
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
 	return textureID;
+}
+
+void renderSkyBox(Sphere& sphere, Shader shader, unsigned int skyboxTexture, glm::mat4& matProj, glm::mat4& matView, glm::vec3 viewPos) {
+	GLint OldCullFaceMode;
+	glGetIntegerv(GL_CULL_FACE_MODE, &OldCullFaceMode);
+	GLint OldDepthFuncMode;
+	glGetIntegerv(GL_DEPTH_FUNC, &OldDepthFuncMode);
+
+	glDepthFunc(GL_LEQUAL);
+
+	shader.use();
+	shader.setMatrix4("view", matView);
+	shader.setMatrix4("projection", matProj);
+	glm::mat4 model;
+	model = glm::translate(model, viewPos);
+	shader.setMatrix4("model", model);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+
+	sphere.RenderSimple(shader);
 }
 
 int main(int argc, char** argv) {
@@ -274,6 +296,19 @@ int main(int argc, char** argv) {
 
 #pragma endregion
 
+	Shader shaderSkybox("shaders/deferred_rendering/skybox.vs", "shaders/deferred_rendering/skybox.fs");
+	Shader shaderSkybox1("shaders/deferred_rendering/skybox1.vs", "shaders/deferred_rendering/skybox.fs");
+	std::vector<std::string> cubeMaps;
+	cubeMaps.push_back("resources/skybox2/sp3right.jpg");
+	cubeMaps.push_back("resources/skybox2/sp3left.jpg");
+	cubeMaps.push_back("resources/skybox2/sp3top.jpg");
+	cubeMaps.push_back("resources/skybox2/sp3bot.jpg");
+	cubeMaps.push_back("resources/skybox2/sp3front.jpg");
+	cubeMaps.push_back("resources/skybox2/sp3back.jpg");
+	unsigned int skyboxTexture = loadCubeMap(cubeMaps);
+
+	Sphere skydome;
+
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
@@ -321,6 +356,7 @@ int main(int argc, char** argv) {
 			glCullFace(GL_FRONT);
 			terrain.Render(shaderTerrain_underWater);
 			glCullFace(GL_BACK);
+			renderSkyBox(skydome, shaderSkybox, skyboxTexture, projection, view, camera.GetPos());
 		}
 		else {
 			model = glm::mat4();
@@ -330,6 +366,7 @@ int main(int argc, char** argv) {
 			shaderTerrain_upWater.setMatrix4("projection", projection);
 			shaderTerrain_upWater.setFloat("waterHeight", 10.0f);
 			terrain.Render(shaderTerrain_upWater);
+			renderSkyBox(skydome, shaderSkybox, skyboxTexture, projection, view, camera.GetPos());
 		}
 #pragma endregion
 
@@ -344,6 +381,7 @@ int main(int argc, char** argv) {
 			shaderTerrain_underWater.setMatrix4("projection", projection);
 			shaderTerrain_underWater.setFloat("waterHeight", 10.0f);
 			terrain.Render(shaderTerrain_underWater);
+			renderSkyBox(skydome, shaderSkybox1, skyboxTexture, projection, view, camera.GetPos());
 		}
 		else {
 			glCullFace(GL_FRONT);
@@ -355,6 +393,7 @@ int main(int argc, char** argv) {
 			shaderTerrain_upWater.setFloat("waterHeight", 10.0f);
 			terrain.Render(shaderTerrain_upWater);
 			glCullFace(GL_BACK);
+			renderSkyBox(skydome, shaderSkybox1, skyboxTexture, projection, view, camera.GetPos());
 		}
 #pragma endregion
 
@@ -398,6 +437,7 @@ int main(int argc, char** argv) {
 		glBindTexture(GL_TEXTURE_2D, depthTexture);
 		water.Render(shaderWater);
 		glEnable(GL_CULL_FACE);
+		renderSkyBox(skydome, shaderSkybox1, skyboxTexture, projection, view, camera.GetPos());
 
 		//shaderTest.use();
 		//glActiveTexture(GL_TEXTURE0);

@@ -136,6 +136,7 @@
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Quad.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Sphere.cpp" />
     <ClCompile Include="stb_image.cpp" />
     <ClCompile Include="Terrain.cpp" />
     <ClCompile Include="Texture.cpp" />
@@ -150,6 +151,7 @@
     <ClInclude Include="Model.h" />
     <ClInclude Include="Quad.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="Sphere.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Terrain.h" />
     <ClInclude Include="Texture.h" />
