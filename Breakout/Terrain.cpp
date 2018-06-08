@@ -68,6 +68,12 @@ bool Terrain::LoadHeightmap(const std::string& filename, unsigned char bitsPerPi
 	float halfTerrainWidth = terrainWidth * 0.5f;
 	float halfTerrainHeight = terrainHeight * 0.5f;
 
+	float maxX = FLT_MIN;
+	float minX = FLT_MAX;
+
+	float maxZ = FLT_MIN;
+	float minZ = FLT_MAX;
+
 	for (unsigned int j = 0; j < height; j++) {
 		for (unsigned int i = 0; i < width; i++) {
 			unsigned int index = (j * width) + i;
@@ -80,6 +86,12 @@ bool Terrain::LoadHeightmap(const std::string& filename, unsigned char bitsPerPi
 			float X = (S * terrainWidth) - halfTerrainWidth;
 			float Y = heightValue * m_HeightScale;
 			float Z = (T * terrainHeight) - halfTerrainHeight;
+
+			maxX = __max(maxX, X);
+			minX = __min(minX, X);
+
+			maxZ = __max(maxZ, Z);
+			minZ = __min(minZ, Z);
 
 			m_Normals[index] = glm::vec3(0.0f);
 			m_Positions[index] = glm::vec3(X, Y, Z);
