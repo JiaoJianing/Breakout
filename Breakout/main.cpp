@@ -299,12 +299,12 @@ int main(int argc, char** argv) {
 	Shader shaderSkybox("shaders/deferred_rendering/skybox.vs", "shaders/deferred_rendering/skybox.fs");
 	Shader shaderSkybox1("shaders/deferred_rendering/skybox1.vs", "shaders/deferred_rendering/skybox.fs");
 	std::vector<std::string> cubeMaps;
-	cubeMaps.push_back("resources/skybox2/sp3right.jpg");
-	cubeMaps.push_back("resources/skybox2/sp3left.jpg");
-	cubeMaps.push_back("resources/skybox2/sp3top.jpg");
-	cubeMaps.push_back("resources/skybox2/sp3bot.jpg");
-	cubeMaps.push_back("resources/skybox2/sp3front.jpg");
-	cubeMaps.push_back("resources/skybox2/sp3back.jpg");
+	cubeMaps.push_back("resources/skybox3/right.jpg");
+	cubeMaps.push_back("resources/skybox3/left.jpg");
+	cubeMaps.push_back("resources/skybox3/top.jpg");
+	cubeMaps.push_back("resources/skybox3/bottom.jpg");
+	cubeMaps.push_back("resources/skybox3/front.jpg");
+	cubeMaps.push_back("resources/skybox3/back.jpg");
 	unsigned int skyboxTexture = loadCubeMap(cubeMaps);
 
 	Sphere skydome;
