@@ -1,5 +1,7 @@
 # Breakout
 OpenGL学习记录
+根据教程https://learnopengl-cn.github.io/ 编写。
+可切换到不同的分支查看每一节的代码
 
 使用VS2017开发。
 
