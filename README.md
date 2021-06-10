@@ -10,4 +10,4 @@ OpenGL学习记录
 3. 将3rdLibrary目录中的dll拷贝到运行目录。
 
 做好的小游戏地址:
-https://pan.baidu.com/s/1Cc4p0hdgymGGA_AvV6mZLw
+链接: https://pan.baidu.com/s/1MEm7g4_PIMSFbZCqhw8JXw  密码: i5j5
